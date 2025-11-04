@@ -37,7 +37,13 @@ export default function Navbar({ profile, onProfileClick }) {
       {/* Esquerda: "Jogos" e "Mídia" */}
       <div className="flex items-center space-x-8 text-xl font-semibold">
         <span className="text-white cursor-pointer hover:text-blue-400 transition-colors duration-200">Jogos</span>
-        <span className="cursor-pointer hover:text-blue-400 transition-colors duration-200">Mídia</span>
+       {/* CORREÇÃO: Mudar texto e adicionar onClick para a Documentação */}
+               <span 
+                 className="cursor-pointer hover:text-blue-400 transition-colors duration-200"
+                 onClick={() => alert("Abrindo Documentação do Site...")} 
+               >
+                 Documentação
+               </span>
       </div>
 
       {/* Direita: Perfil e Relógio */}

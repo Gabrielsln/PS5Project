@@ -3,9 +3,9 @@ export const games = [
   // Seus 5 jogos originais (nomes verificados do seu print)
   {
     id: 1,
-    title: "God of War Ragnarök",
+    title: "God of War",
     cover: "/images/gow_cover.webp",
-    banner: "/images/gow_banner.webp",
+    banner: "/images/gow_banner.jpg",
   },
   {
     id: 2,
