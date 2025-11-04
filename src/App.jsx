@@ -1,13 +1,9 @@
-// src/App.jsx
+// src/App.jsx (VERSÃO COM TELA DE SELEÇÃO DE PERFIL E LÓGICA DE SOM AJUSTADA)
 
 import { useState, useEffect, useCallback, useRef } from "react";
-// Import GameCard e LibraryGrid - Assumindo que você tem esses arquivos
-// Nota: O GameCard está incluído abaixo para garantir que este código seja executável
-// Se você tem GameCard em components/GameCard.jsx, remova o componente abaixo
-// e mantenha o import original.
-// import Navbar from "./components/Navbar"; 
-// import GameCard from "./components/GameCard"; 
+import GameCard from "./components/GameCard";
 import LibraryGrid from "./components/LibraryGrid";
+import ProfileSelect from "./components/ProfileSelect"; 
 import { games } from "./data/games";
 
 // Importa todos os sons
@@ -31,53 +27,10 @@ const libraryItem = {
 const allSelectableItems = [storeItem, ...games, libraryItem];
 // --- Fim Constantes ---
 
-// Componente GameCard (Incluído localmente para garantir a execução)
-function GameCard({ game, isSelected, onClick }) {
-  const isAnimating = useRef(false);
-
-  useEffect(() => {
-    if (isSelected) {
-      isAnimating.current = true;
-      setTimeout(() => {
-        isAnimating.current = false;
-      }, 300); 
-    }
-  }, [isSelected]);
-
-  const transitionClass = isAnimating.current || isSelected 
-    ? 'transition-all duration-300 ease-in-out' 
-    : 'transition-all duration-200 ease-out';
-
-  return (
-    <div
-      onClick={onClick}
-      className={`relative rounded-lg overflow-hidden cursor-pointer flex-shrink-0 ${transitionClass} ${
-        isSelected
-          ? "transform scale-110 shadow-lg shadow-blue-500/40"
-          : "transform scale-100 opacity-70 hover:opacity-100"
-      }`}
-      style={{
-        width: isSelected ? "100px" : "80px",
-        height: isSelected ? "100px" : "80px",
-      }}
-    >
-      <img
-        src={game.cover}
-        alt={game.title}
-        className="w-full h-full object-cover"
-      />
-      {isSelected && (
-        <div className="absolute inset-0 border-4 border-blue-400 rounded-lg"></div>
-      )}
-    </div>
-  );
-}
-// Fim do componente GameCard
-
 
 export default function App() {
-  // Estados de View e Animação
-  const [view, setView] = useState('home');
+  // Estado de View inicial
+  const [view, setView] = useState('profile'); 
   const [appOpacity, setAppOpacity] = useState(1);
 
   // Estados de Seleção
@@ -88,40 +41,30 @@ export default function App() {
     (item) => item.id === selectedId
   );
 
-  // --- CORREÇÃO DE ÁUDIO: Usando useRef para objetos estáveis ---
+  // Refs de Áudio e Estado
   const audioTick = useRef(new Audio(moveSound));
   const audioEnter = useRef(new Audio(navigationEnterSound));
   const audioBack = useRef(new Audio(navigationBackSound));
-
-  // Refs para Timers e Estado
   const initialDelayRef = useRef(null);
   const repeatIntervalRef = useRef(null);
   const heldDirection = useRef(null);
-  const isInitialLoad = useRef(true); // Flag de carregamento inicial
+  const isInitialLoad = useRef(true);
   const selectedIdRef = useRef(selectedId);
+  const viewRef = useRef(view);
+  
   useEffect(() => {
     selectedIdRef.current = selectedId;
-  }, [selectedId]);
-
-  // Ref para a view
-  const viewRef = useRef(view);
-  useEffect(() => {
     viewRef.current = view;
-  }, [view]);
+  }, [selectedId, view]);
 
-  // --- CORREÇÃO: LÓGICA DE ÁUDIO E LOAD INICIAL ---
-
-  // 1. Pré-carrega sons e desativa o flag de load inicial APENAS AQUI.
+  // Lógica de áudio e load inicial
   useEffect(() => {
     audioTick.current.load();
     audioEnter.current.load();
     audioBack.current.load();
-    
-    // Desativa o flag de load inicial SÓ DEPOIS de carregar os sons.
     isInitialLoad.current = false; 
-  }, []); // Roda SÓ UMA VEZ
+  }, []); 
 
-  // 2. Efeito para selectedId (Home view)
   useEffect(() => {
     if (isInitialLoad.current) return;
     if (viewRef.current !== 'home') return;
@@ -129,36 +72,45 @@ export default function App() {
     audioTick.current.currentTime = 0;
     audioTick.current.play().catch((e) => console.error("Audio play failed:", e));
   }, [selectedId]); 
-  // O Efeito para libraryIndex foi removido daqui e MOVIMENTADO
-  // para dentro de LibraryGrid.jsx, onde é mais adequado (Ver arquivo LibraryGrid).
 
 
   const [bannerOpacity, setBannerOpacity] = useState(1);
   const [currentBanner, setCurrentBanner] = useState(selectedItem.banner);
 
-  // Função de troca de View (com som de "Voltar")
+  // --- FUNÇÃO CORRIGIDA 1/2: Lógica de transição de tela ---
   const handleChangeView = useCallback((newView) => {
-    // --- LÓGICA DE DELAY CORRIGIDA ---
-    let transitionDelay = 200; // Delay padrão para o CSS opacity transition
+    let transitionDelay = 200; 
     
-    if (newView === 'home') {
-      // Toca o som de volta imediatamente
+    // Toca o som de 'BACK' APENAS se estiver voltando da library para home (via ESC)
+    if (newView === 'home' && viewRef.current === 'library') { 
       audioBack.current.currentTime = 0;
       audioBack.current.play().catch((e) => console.error("Audio back failed:", e));
-      
-      // Aumenta o delay para dar tempo do som de volta tocar (400ms)
       transitionDelay = 400; 
-    }
+    } 
+    // OBS: O som de ENTER/AVANÇAR é tocado nos manipuladores (handleKeyDown, handleProfileSelect)
     
     setAppOpacity(0);
     setTimeout(() => {
       setView(newView);
       setAppOpacity(1);
-    }, transitionDelay); // Usa o delay calculado
-    // --- FIM LÓGICA DE DELAY CORRIGIDA ---
-  }, []); // Dependência removida, pois áudios são Refs
+    }, transitionDelay); 
+  }, []);
+  
+  // --- FUNÇÃO CORRIGIDA 2/2: Seleção de Perfil (Dispara o som de ENTER) ---
+  const handleProfileSelect = useCallback((action) => {
+    if (action === 'home') {
+      // Dispara o som de ENTER imediatamente antes de mudar a view
+      audioEnter.current.currentTime = 0;
+      audioEnter.current.play().catch((e) => console.error("Audio enter failed:", e));
+      
+      // Muda a view diretamente, pois a navegação de perfil para home é imediata
+      setView('home'); 
+    } else if (action === 'docs') {
+      alert("Abrindo Documentação do Site...");
+    }
+  }, []); 
 
-  // Funções de Movimento (sem som)
+  // Funções de Movimento (mantidas)
   const handleGameSelect = useCallback((newId) => {
     setSelectedId(newId);
   }, []); 
@@ -202,17 +154,17 @@ export default function App() {
     }, 200);
     return () => clearTimeout(timer);
   }, [selectedItem, view]);
-
-
-  // O "Cérebro" do Teclado
+  
+  // O CÉREBRO DO TECLADO:
   const handleKeyDown = useCallback(
     (event) => {
       if (event.repeat) return;
+      
+      if (viewRef.current === 'profile') return; // IGNORA O TECLADO NA TELA DE PERFIL (deixando o ProfileSelect controlar)
 
-      // Lógica da Tela HOME
       if (viewRef.current === 'home') {
         if (event.key === 'Enter' && selectedIdRef.current === libraryItem.id) {
-          // CORREÇÃO: Toca navigation_enter.mp3
+          // Toca o som de ENTER aqui (função de navegação para a Library)
           audioEnter.current.currentTime = 0;
           audioEnter.current.play().catch((e) => console.error("Audio enter failed:", e));
           handleChangeView('library');
@@ -233,20 +185,25 @@ export default function App() {
           }, 350);
         }
       }
-      // Lógica da Tela LIBRARY
       else if (viewRef.current === 'library') {
-        // A lógica do teclado na Library foi movida para dentro do LibraryGrid.jsx
-        // para melhor encapsulamento. Aqui apenas mantemos o código base.
         if (event.key === 'Escape') {
           handleChangeView('home');
           return;
         }
-        // ... (o resto da lógica de movimento do teclado na Library foi para o LibraryGrid.jsx)
+        let direction = null;
+        if (event.key === "ArrowUp") direction = 'up';
+        if (event.key === "ArrowDown") direction = 'down';
+        if (event.key === "ArrowLeft") direction = 'left';
+        if (event.key === "ArrowRight") direction = 'right';
+        
+        if (direction) {
+          moveLibrarySelection(direction);
+        }
       }
     },
-    [moveHomeSelection, moveLibrarySelection, handleChangeView] // Dependências estáveis
+    [moveHomeSelection, moveLibrarySelection, handleChangeView] 
   );
-
+  
   // handleKeyUp
   const handleKeyUp = useCallback((event) => {
     if (heldDirection.current) {
@@ -258,7 +215,7 @@ export default function App() {
     }
   }, []);
 
-  // Event Listeners
+  
   useEffect(() => {
     const cleanup = () => {
       window.removeEventListener("keydown", handleKeyDown);
@@ -270,7 +227,7 @@ export default function App() {
 
     cleanup();
 
-    if (appOpacity === 1) {
+    if (appOpacity === 1 && view !== 'profile') { 
       window.addEventListener("keydown", handleKeyDown);
       window.addEventListener("keyup", handleKeyUp);
     }
@@ -285,6 +242,12 @@ export default function App() {
       className="min-h-screen w-full relative flex flex-col overflow-hidden"
       style={{ opacity: appOpacity, transition: 'opacity 0.2s ease-in-out' }}
     >
+      
+      {/* TELA DE SELEÇÃO DE PERFIL */}
+      {view === 'profile' && (
+          <ProfileSelect onSelectProfile={handleProfileSelect} />
+      )}
+      
       {view === 'home' && (
         <>
           <div
@@ -313,6 +276,7 @@ export default function App() {
           </nav>
 
           <main className="relative z-20 flex flex-col flex-grow justify-between h-full pt-20">
+            {/* CORREÇÃO DO BALANÇO: Usando 'space-x-4' (versão restaurada) */}
             <div className="flex space-x-4 items-center p-8">
               <GameCard
                 game={storeItem}
@@ -366,7 +330,6 @@ export default function App() {
           onBack={() => handleChangeView('home')} 
           selectedIndex={libraryIndex}
           onGameSelect={setLibraryIndex} 
-          // O audioTick NÃO é mais passado, pois LibraryGrid gerencia o seu próprio som
         />
       )}
     </div>

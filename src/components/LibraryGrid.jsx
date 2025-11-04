@@ -98,6 +98,11 @@ export default function LibraryGrid({ games, onBack }) {
       case 's': direction = 'down'; break;
       case 'a': direction = 'left'; break;
       case 'd': direction = 'right'; break;
+      // NOVO: Adicionando as setas (Arrow Keys)
+      case 'arrowup': direction = 'up'; break;
+      case 'arrowdown': direction = 'down'; break;
+      case 'arrowleft': direction = 'left'; break;
+      case 'arrowright': direction = 'right'; break;
       default: return;
     }
 
