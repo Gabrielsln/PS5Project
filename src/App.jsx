@@ -1,4 +1,4 @@
-// src/App.jsx
+// src/App.jsx (COMPLETO E CORRIGIDO: Posição Alta e Compacta)
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import GameCard from "./components/GameCard";
@@ -72,7 +72,6 @@ export default function App() {
   const handleChangeView = useCallback((newView) => {
     let transitionDelay = 200; 
     
-    // Toca o som de 'BACK' (ESC)
     if (newView === 'home' && viewRef.current === 'library') { 
       audioBack.current.currentTime = 0;
       audioBack.current.play().catch((e) => console.error("Audio back failed:", e));
@@ -86,7 +85,7 @@ export default function App() {
     }, transitionDelay); 
   }, []);
   
-  // --- HANDLER DE SELEÇÃO DE PERFIL ---
+  // HANDLER DE SELEÇÃO DE PERFIL
   const handleProfileSelect = useCallback((profile) => {
     setSelectedProfile(profile);
     
@@ -100,7 +99,7 @@ export default function App() {
     }
   }, []); 
 
-  // --- HANDLER DE VOLTA DO PERFIL (Usado no Navbar) ---
+  // HANDLER DE VOLTA DO PERFIL (Usado no Navbar)
   const handleGoToProfileSelect = useCallback(() => {
       audioBack.current.currentTime = 0;
       audioBack.current.play().catch((e) => console.error("Audio back failed:", e));
@@ -108,7 +107,7 @@ export default function App() {
   }, []);
 
 
-  // --- FUNÇÕES DE MOVIMENTO (Essenciais) ---
+  // FUNÇÕES DE MOVIMENTO
   const handleGameSelect = useCallback((newId) => { setSelectedId(newId); }, []); 
   const moveHomeSelection = useCallback((direction) => {
     setSelectedId(prevId => {
@@ -149,7 +148,7 @@ export default function App() {
     return () => clearTimeout(timer);
   }, [selectedItem, view]);
   
-  // O CÉREBRO DO TECLADO: handleKeyDown/handleKeyUp
+  // O CÉREBRO DO TECLADO: handleKeyDown/handleKeyUp (omitido, mas completo)
   const handleKeyDown = useCallback(
     (event) => {
       if (event.repeat) return;
@@ -260,15 +259,18 @@ export default function App() {
             <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/90 to-transparent z-10"></div>
           </div>
 
-          <main className="relative z-20 flex flex-col flex-grow justify-between h-full pt-20">
-            <div className="flex space-x-4 items-center p-8">
+          {/* CORRIGIDO: Reduzindo padding-top para que a barra de jogos fique mais alta */}
+          <main className="relative z-20 flex flex-col flex-grow justify-between h-full pt-16"> 
+            
+            {/* CORRIGIDO: Posicionamento compacto e mais à esquerda */}
+            <div className="flex space-x-3 items-center pl-4"> 
               <GameCard
                 game={storeItem}
                 isSelected={selectedId === storeItem.id}
                 onClick={() => handleGameSelect(storeItem.id)}
               />
               <div className="h-20 w-px bg-gray-600"></div>
-              <div className="flex space-x-4">
+              <div className="flex space-x-3"> {/* Espaçamento compacto de 0.75rem (space-x-3) */}
                 {games.map((game) => (
                   <GameCard
                     key={game.id}
@@ -289,7 +291,7 @@ export default function App() {
               key={selectedItem.id}
               className="text-left p-8 mb-16 max-w-2xl animate-fadeIn"
             >
-              <h2 className="text-5xl md:text-6xl font-bold tracking-tight leading-tight text-blue-400 mb-4">
+              <h2 className="text-5xl md:text-6xl font-bold tracking-tight leading-tight text-white-400 mb-4">
                 {selectedItem.title}
               </h2>
               {selectedItem.id === storeItem.id && (
