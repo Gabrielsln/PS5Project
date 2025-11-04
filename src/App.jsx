@@ -1,9 +1,10 @@
-// src/App.jsx (VERSÃO COM TELA DE SELEÇÃO DE PERFIL E LÓGICA DE SOM AJUSTADA)
+// src/App.jsx
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import GameCard from "./components/GameCard";
 import LibraryGrid from "./components/LibraryGrid";
 import ProfileSelect from "./components/ProfileSelect"; 
+import Navbar from "./components/Navbar"; 
 import { games } from "./data/games";
 
 // Importa todos os sons
@@ -11,35 +12,24 @@ import moveSound from "./sound/move.mp3";
 import navigationEnterSound from "./sound/navigation_enter.mp3";
 import navigationBackSound from "./sound/navigation_back.mp3";
 
-// --- Constantes (sem alteração) ---
-const storeItem = {
-  id: 0,
-  title: "PlayStation Store",
-  cover: "/images/ps_store_icon.png",
-  banner: "/images/cyberpunk_banner.png",
-};
-const libraryItem = {
-  id: 99,
-  title: "Biblioteca de Jogos",
-  cover: "/images/library_icon.png",
-  banner: "/images/gow_banner.webp",
-};
+// --- Constantes de JOGOS ---
+const storeItem = { id: 0, title: "PlayStation Store", cover: "/images/ps_store_icon.png", banner: "/images/cyberpunk_banner.png" };
+const libraryItem = { id: 99, title: "Biblioteca de Jogos", cover: "/images/library_icon.png", banner: "/images/gow_banner.webp" };
 const allSelectableItems = [storeItem, ...games, libraryItem];
-// --- Fim Constantes ---
+// --- Constantes de PERFIL ---
+const PROFILES = [
+  { id: 1, name: "Kratos", imageUrl: "/images/kratos_icon.jpeg", action: "home" }, 
+  { id: 2, name: "Documentação", imageUrl: "/images/document_icon.png", action: "docs" },
+];
 
 
 export default function App() {
-  // Estado de View inicial
   const [view, setView] = useState('profile'); 
   const [appOpacity, setAppOpacity] = useState(1);
+  const [selectedProfile, setSelectedProfile] = useState(PROFILES[0]); 
 
-  // Estados de Seleção
   const [selectedId, setSelectedId] = useState(1);
   const [libraryIndex, setLibraryIndex] = useState(0);
-  
-  const selectedItem = allSelectableItems.find(
-    (item) => item.id === selectedId
-  );
 
   // Refs de Áudio e Estado
   const audioTick = useRef(new Audio(moveSound));
@@ -75,19 +65,19 @@ export default function App() {
 
 
   const [bannerOpacity, setBannerOpacity] = useState(1);
+  const selectedItem = allSelectableItems.find((item) => item.id === selectedId) || allSelectableItems[0];
   const [currentBanner, setCurrentBanner] = useState(selectedItem.banner);
 
-  // --- FUNÇÃO CORRIGIDA 1/2: Lógica de transição de tela ---
+  // Lógica de transição de tela
   const handleChangeView = useCallback((newView) => {
     let transitionDelay = 200; 
     
-    // Toca o som de 'BACK' APENAS se estiver voltando da library para home (via ESC)
+    // Toca o som de 'BACK' (ESC)
     if (newView === 'home' && viewRef.current === 'library') { 
       audioBack.current.currentTime = 0;
       audioBack.current.play().catch((e) => console.error("Audio back failed:", e));
       transitionDelay = 400; 
     } 
-    // OBS: O som de ENTER/AVANÇAR é tocado nos manipuladores (handleKeyDown, handleProfileSelect)
     
     setAppOpacity(0);
     setTimeout(() => {
@@ -96,25 +86,30 @@ export default function App() {
     }, transitionDelay); 
   }, []);
   
-  // --- FUNÇÃO CORRIGIDA 2/2: Seleção de Perfil (Dispara o som de ENTER) ---
-  const handleProfileSelect = useCallback((action) => {
-    if (action === 'home') {
-      // Dispara o som de ENTER imediatamente antes de mudar a view
-      audioEnter.current.currentTime = 0;
-      audioEnter.current.play().catch((e) => console.error("Audio enter failed:", e));
-      
-      // Muda a view diretamente, pois a navegação de perfil para home é imediata
+  // --- HANDLER DE SELEÇÃO DE PERFIL ---
+  const handleProfileSelect = useCallback((profile) => {
+    setSelectedProfile(profile);
+    
+    audioEnter.current.currentTime = 0;
+    audioEnter.current.play().catch((e) => console.error("Audio enter failed:", e));
+
+    if (profile.action === 'home') {
       setView('home'); 
-    } else if (action === 'docs') {
+    } else if (profile.action === 'docs') {
       alert("Abrindo Documentação do Site...");
     }
   }, []); 
 
-  // Funções de Movimento (mantidas)
-  const handleGameSelect = useCallback((newId) => {
-    setSelectedId(newId);
-  }, []); 
+  // --- HANDLER DE VOLTA DO PERFIL (Usado no Navbar) ---
+  const handleGoToProfileSelect = useCallback(() => {
+      audioBack.current.currentTime = 0;
+      audioBack.current.play().catch((e) => console.error("Audio back failed:", e));
+      setView('profile');
+  }, []);
 
+
+  // --- FUNÇÕES DE MOVIMENTO (Essenciais) ---
+  const handleGameSelect = useCallback((newId) => { setSelectedId(newId); }, []); 
   const moveHomeSelection = useCallback((direction) => {
     setSelectedId(prevId => {
       const currentIndex = allSelectableItems.findIndex(item => item.id === prevId);
@@ -127,7 +122,6 @@ export default function App() {
       return (newIndex !== currentIndex) ? allSelectableItems[newIndex].id : prevId;
     });
   }, [allSelectableItems]);
-
   const moveLibrarySelection = useCallback((direction) => {
     const COLS = 6;
     const numGames = games.length;
@@ -155,16 +149,14 @@ export default function App() {
     return () => clearTimeout(timer);
   }, [selectedItem, view]);
   
-  // O CÉREBRO DO TECLADO:
+  // O CÉREBRO DO TECLADO: handleKeyDown/handleKeyUp
   const handleKeyDown = useCallback(
     (event) => {
       if (event.repeat) return;
-      
-      if (viewRef.current === 'profile') return; // IGNORA O TECLADO NA TELA DE PERFIL (deixando o ProfileSelect controlar)
+      if (viewRef.current === 'profile') return; 
 
       if (viewRef.current === 'home') {
         if (event.key === 'Enter' && selectedIdRef.current === libraryItem.id) {
-          // Toca o som de ENTER aqui (função de navegação para a Library)
           audioEnter.current.currentTime = 0;
           audioEnter.current.play().catch((e) => console.error("Audio enter failed:", e));
           handleChangeView('library');
@@ -201,10 +193,9 @@ export default function App() {
         }
       }
     },
-    [moveHomeSelection, moveLibrarySelection, handleChangeView] 
+    [handleChangeView, moveHomeSelection, moveLibrarySelection] 
   );
-  
-  // handleKeyUp
+
   const handleKeyUp = useCallback((event) => {
     if (heldDirection.current) {
       heldDirection.current = null;
@@ -215,7 +206,6 @@ export default function App() {
     }
   }, []);
 
-  
   useEffect(() => {
     const cleanup = () => {
       window.removeEventListener("keydown", handleKeyDown);
@@ -245,11 +235,19 @@ export default function App() {
       
       {/* TELA DE SELEÇÃO DE PERFIL */}
       {view === 'profile' && (
-          <ProfileSelect onSelectProfile={handleProfileSelect} />
+          <ProfileSelect 
+            profiles={PROFILES} 
+            onSelectProfile={handleProfileSelect} 
+          />
       )}
       
       {view === 'home' && (
         <>
+          <Navbar 
+            profile={selectedProfile}
+            onProfileClick={handleGoToProfileSelect} 
+          />
+          
           <div
             className="absolute inset-0 w-full h-full bg-cover bg-center"
             style={{
@@ -262,21 +260,7 @@ export default function App() {
             <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/90 to-transparent z-10"></div>
           </div>
 
-          <nav className="fixed top-0 left-0 right-0 w-full px-10 py-4 flex justify-between items-center text-gray-300 z-20">
-             <div className="flex items-center space-x-8 text-xl font-semibold">
-               <span className="text-white cursor-pointer hover:text-blue-400 transition-colors duration-200">Jogos</span>
-               <span className="cursor-pointer hover:text-blue-400 transition-colors duration-200">Mídia</span>
-             </div>
-             <div className="flex items-center space-x-6">
-               <span className="text-2xl cursor-pointer hover:text-white transition-colors duration-220">🔍</span>
-               <span className="text-2xl cursor-pointer hover:text-white transition-colors duration-220">⚙️</span>
-               <div className="w-8 h-8 rounded-full bg-gray-600 border border-gray-400 cursor-pointer"></div>
-               <span className="text-2xl font-light">8:19</span>
-             </div>
-          </nav>
-
           <main className="relative z-20 flex flex-col flex-grow justify-between h-full pt-20">
-            {/* CORREÇÃO DO BALANÇO: Usando 'space-x-4' (versão restaurada) */}
             <div className="flex space-x-4 items-center p-8">
               <GameCard
                 game={storeItem}

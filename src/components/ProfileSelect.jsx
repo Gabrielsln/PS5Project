@@ -1,24 +1,6 @@
-// src/components/ProfileSelect.jsx (CORRIGIDO: Adicionado A/D na navegação)
+// src/components/ProfileSelect.jsx
 
 import React, { useState, useEffect, useCallback } from 'react';
-
-// Dados Fictícios do Perfil
-const profiles = [
-  { 
-    id: 1, 
-    name: "Kratos", 
-    imageUrl: "/images/kratos_icon.jpeg", 
-    action: "home" // Ação para ir para a página inicial
-  },
-  { 
-    id: 2, 
-    name: "Documentação", 
-    // Ícone simples de documento (substitua por uma imagem real se quiser)
-    // Se 'document_icon.png' está em 'public/images/', este caminho é o certo.
-    imageUrl: "/images/document_icon.png", 
-    action: "docs" // Ação para ir para a documentação
-  },
-];
 
 // Componente para o Cartão de Perfil
 const ProfileCard = ({ profile, isSelected, onClick }) => {
@@ -29,7 +11,7 @@ const ProfileCard = ({ profile, isSelected, onClick }) => {
         transition-all duration-300 ease-in-out mx-8
         ${isSelected ? 'transform scale-110' : 'opacity-70 hover:opacity-100'}
       `}
-      onClick={() => onClick(profile.action)}
+      onClick={onClick}
     >
       <div 
         className={`
@@ -60,21 +42,37 @@ const ProfileCard = ({ profile, isSelected, onClick }) => {
 };
 
 
-export default function ProfileSelect({ onSelectProfile }) {
+export default function ProfileSelect({ profiles, onSelectProfile }) {
   const [selectedProfileIndex, setSelectedProfileIndex] = useState(0);
+
+  // NOVO: Handler unificado para cliques e navegação
+  const handleProfileClick = useCallback((index) => {
+    const profile = profiles[index];
+    
+    // Atualiza o estado de seleção para feedback visual
+    setSelectedProfileIndex(index); 
+    
+    // Executa a ação no App.jsx, passando o OBJETO do perfil
+    onSelectProfile(profile);        
+  }, [profiles, onSelectProfile]);
 
   // Manipulação de Teclado
   const handleKeyDown = useCallback((event) => {
-    const key = event.key.toLowerCase(); // Captura a tecla em minúsculas
+    const key = event.key.toLowerCase(); 
     
+    // Lógica de movimento A/D e setas
     if (key === 'arrowleft' || key === 'a') {
       setSelectedProfileIndex(prev => Math.max(0, prev - 1));
     } else if (key === 'arrowright' || key === 'd') {
       setSelectedProfileIndex(prev => Math.min(profiles.length - 1, prev + 1));
-    } else if (key === 'enter') {
-      onSelectProfile(profiles[selectedProfileIndex].action);
+    } 
+    
+    // Usa handleProfileClick para o Enter
+    if (key === 'enter') {
+      event.preventDefault();
+      handleProfileClick(selectedProfileIndex);
     }
-  }, [selectedProfileIndex, onSelectProfile]);
+  }, [selectedProfileIndex, profiles, handleProfileClick]); 
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
@@ -84,12 +82,11 @@ export default function ProfileSelect({ onSelectProfile }) {
 
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center relative bg-black">
-      {/* NOVO BACKGROUND: Usando background_login.jpg */}
+      {/* BACKGROUND CORRIGIDO */}
       <div 
         className="absolute inset-0 bg-cover bg-center" 
         style={{ backgroundImage: `url(/images/background_login.jpg)` }} 
       />
-      {/* Overlay escuro para melhorar a leitura */}
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" /> 
       
       {/* Conteúdo Central */}
@@ -105,7 +102,8 @@ export default function ProfileSelect({ onSelectProfile }) {
               key={profile.id}
               profile={profile}
               isSelected={index === selectedProfileIndex}
-              onClick={onSelectProfile}
+              // O clique do mouse agora chama o handleProfileClick, passando o índice
+              onClick={() => handleProfileClick(index)} 
             />
           ))}
         </div>
