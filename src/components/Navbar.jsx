@@ -4,7 +4,7 @@ import React from 'react';
 
 export default function Navbar() {
   return (
-    <nav className="fixed top-0 left-0 right-0 w-full px-10 py-4 flex justify-between items-center text-gray-300 z-20 bg-black bg-opacity-20 backdrop-blur-md border-b border-gray-700">
+    <nav className="fixed top-0 left-0 right-0 w-full px-10 py-4 flex justify-between items-center text-gray-300 z-20">
       {/* Esquerda: "Jogos" e "Mídia" */}
       <div className="flex items-center space-x-8 text-xl font-semibold">
         <span className="text-white cursor-pointer hover:text-blue-400 transition-colors duration-200">Jogos</span>

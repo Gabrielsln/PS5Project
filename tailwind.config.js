@@ -14,10 +14,9 @@ module.exports = {
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
       },
-      // E ADICIONE ISSO:
       animation: {
-        fadeIn: 'fadeIn 0.3s ease-in-out', // <-- Linha nova
-      }
+        fadeIn: 'fadeIn 0.2s ease-in-out', // <-- Mude para 0.2s
+      },
     },
   },
   plugins: [],

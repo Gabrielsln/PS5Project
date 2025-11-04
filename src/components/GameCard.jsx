@@ -3,26 +3,31 @@
 import React from "react";
 
 export default function GameCard({ game, isSelected, onClick }) {
-  // O ícone é menor por padrão
-  const baseSize = "w-20 h-20"; // Tamanho base do ícone
-  const selectedSize = "w-24 h-24 scale-110"; // Tamanho e escala quando selecionado
+  // 1. TAMANHO BASE ÚNICO
+  // O "box" do layout sempre será w-20 h-20
+  const baseSize = "w-20 h-20";
+
+  // 2. CLASSES DE ESTADO
+  // O que muda são apenas transformações e efeitos visuais
+  const stateClasses = isSelected
+    ? "scale-125 ring-2 ring-blue-500 shadow-lg z-10" // Aumenta (scale), brilha e fica na frente (z-index)
+    : "opacity-60 shadow-md"; // Não selecionado: fica opaco
 
   return (
     <div
       className={`
         relative flex-shrink-0 cursor-pointer rounded-lg overflow-hidden
-        transition-all duration-300 ease-in-out transform
-        ${isSelected ? selectedSize : baseSize}
-        ${isSelected ? "ring-2 ring-blue-500 shadow-lg" : "shadow-md opacity-60"}
+        transition-all duration-150 ease-in-out transform
+        ${baseSize} 
+        ${stateClasses}
       `}
       onClick={onClick}
     >
       <img
         src={game.cover}
         alt={game.title}
-        className="w-full h-full object-cover" // Apenas a imagem!
+        className="w-full h-full object-cover"
       />
-      {/* Adicionei 'opacity-60' para os não selecionados para destacá-los menos */}
     </div>
   );
 }
