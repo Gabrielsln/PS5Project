@@ -1,10 +1,11 @@
-// src/App.jsx (COMPLETO E CORRIGIDO: Posição Alta e Compacta)
+// src/App.jsx
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import GameCard from "./components/GameCard";
 import LibraryGrid from "./components/LibraryGrid";
 import ProfileSelect from "./components/ProfileSelect"; 
 import Navbar from "./components/Navbar"; 
+import GameDetailScreen from "./components/GameDetailScreen"; // Importação necessária
 import { games } from "./data/games";
 
 // Importa todos os sons
@@ -18,7 +19,7 @@ const libraryItem = { id: 99, title: "Biblioteca de Jogos", cover: "/images/libr
 const allSelectableItems = [storeItem, ...games, libraryItem];
 // --- Constantes de PERFIL ---
 const PROFILES = [
-  { id: 1, name: "Kratos", imageUrl: "/images/kratos_icon.jpeg", action: "home" }, 
+  { id: 1, name: "Kratos", imageUrl: "/images/kratos_icon.jpeg", action: "home" }, // CORRIGIDO: kratos_icon.jpeg
   { id: 2, name: "Documentação", imageUrl: "/images/document_icon.png", action: "docs" },
 ];
 
@@ -28,8 +29,10 @@ export default function App() {
   const [appOpacity, setAppOpacity] = useState(1);
   const [selectedProfile, setSelectedProfile] = useState(PROFILES[0]); 
 
-  const [selectedId, setSelectedId] = useState(1);
+  const [selectedId, setSelectedId] = useState(1); 
   const [libraryIndex, setLibraryIndex] = useState(0);
+
+  const [expandedGameId, setExpandedGameId] = useState(null); 
 
   // Refs de Áudio e Estado
   const audioTick = useRef(new Audio(moveSound));
@@ -42,6 +45,12 @@ export default function App() {
   const selectedIdRef = useRef(selectedId);
   const viewRef = useRef(view);
   
+  // INICIALIZAÇÃO DE ITENS E BANNER
+  const initialSelectedItem = allSelectableItems.find((item) => item.id === selectedId) || allSelectableItems[0];
+  const [bannerOpacity, setBannerOpacity] = useState(1);
+  const [currentBanner, setCurrentBanner] = useState(initialSelectedItem.banner);
+  const selectedItem = allSelectableItems.find((item) => item.id === selectedId) || allSelectableItems[0];
+
   useEffect(() => {
     selectedIdRef.current = selectedId;
     viewRef.current = view;
@@ -55,6 +64,7 @@ export default function App() {
     isInitialLoad.current = false; 
   }, []); 
 
+  // Efeito de som para o movimento na Home
   useEffect(() => {
     if (isInitialLoad.current) return;
     if (viewRef.current !== 'home') return;
@@ -63,10 +73,6 @@ export default function App() {
     audioTick.current.play().catch((e) => console.error("Audio play failed:", e));
   }, [selectedId]); 
 
-
-  const [bannerOpacity, setBannerOpacity] = useState(1);
-  const selectedItem = allSelectableItems.find((item) => item.id === selectedId) || allSelectableItems[0];
-  const [currentBanner, setCurrentBanner] = useState(selectedItem.banner);
 
   // Lógica de transição de tela
   const handleChangeView = useCallback((newView) => {
@@ -106,9 +112,25 @@ export default function App() {
       setView('profile');
   }, []);
 
+  const handleGameSelect = useCallback((newId) => {
+    setSelectedId(newId);
+  }, []);
 
-  // FUNÇÕES DE MOVIMENTO
-  const handleGameSelect = useCallback((newId) => { setSelectedId(newId); }, []); 
+  // --- HANDLERS DE EXPANSÃO ---
+  const handleGameExpand = useCallback((gameId) => {
+    audioEnter.current.currentTime = 0;
+    audioEnter.current.play().catch((e) => console.error("Audio enter failed:", e));
+    setExpandedGameId(gameId); 
+  }, []); 
+
+  const handleGameCollapse = useCallback(() => {
+    audioBack.current.currentTime = 0;
+    audioBack.current.play().catch((e) => console.error("Audio back failed:", e));
+    setExpandedGameId(null);
+  }, []);
+  // -----------------------------
+
+  // FUNÇÃO DE MOVIMENTO NA HOME (mantida e funcional)
   const moveHomeSelection = useCallback((direction) => {
     setSelectedId(prevId => {
       const currentIndex = allSelectableItems.findIndex(item => item.id === prevId);
@@ -121,23 +143,10 @@ export default function App() {
       return (newIndex !== currentIndex) ? allSelectableItems[newIndex].id : prevId;
     });
   }, [allSelectableItems]);
-  const moveLibrarySelection = useCallback((direction) => {
-    const COLS = 6;
-    const numGames = games.length;
-    setLibraryIndex(prevIndex => {
-      let newIndex = prevIndex;
-      switch (direction) {
-        case 'up': newIndex = Math.max(0, prevIndex - COLS); break;
-        case 'down': newIndex = Math.min(numGames - 1, prevIndex + COLS); break;
-        case 'left': newIndex = Math.max(0, prevIndex - 1); break;
-        case 'right': newIndex = Math.min(numGames - 1, prevIndex + 1); break;
-        default: return prevIndex;
-      }
-      return (newIndex !== prevIndex) ? newIndex : prevIndex;
-    });
-  }, [games.length]);
 
-
+  // FUNÇÃO DE MOVIMENTO NA LIBRARY (REMOVIDA)
+  // Removida para garantir que o controle de teclado seja exclusivo do LibraryGrid.jsx
+  
   useEffect(() => {
     if (view !== 'home') return;
     setBannerOpacity(0);
@@ -148,7 +157,7 @@ export default function App() {
     return () => clearTimeout(timer);
   }, [selectedItem, view]);
   
-  // O CÉREBRO DO TECLADO: handleKeyDown/handleKeyUp (omitido, mas completo)
+  // O CÉREBRO DO TECLADO: handleKeyDown/handleKeyUp
   const handleKeyDown = useCallback(
     (event) => {
       if (event.repeat) return;
@@ -177,22 +186,10 @@ export default function App() {
         }
       }
       else if (viewRef.current === 'library') {
-        if (event.key === 'Escape') {
-          handleChangeView('home');
-          return;
-        }
-        let direction = null;
-        if (event.key === "ArrowUp") direction = 'up';
-        if (event.key === "ArrowDown") direction = 'down';
-        if (event.key === "ArrowLeft") direction = 'left';
-        if (event.key === "ArrowRight") direction = 'right';
-        
-        if (direction) {
-          moveLibrarySelection(direction);
-        }
+          // Deixa o LibraryGrid.jsx lidar com Enter e Movimento.
       }
     },
-    [handleChangeView, moveHomeSelection, moveLibrarySelection] 
+    [handleChangeView, moveHomeSelection] 
   );
 
   const handleKeyUp = useCallback((event) => {
@@ -216,15 +213,18 @@ export default function App() {
 
     cleanup();
 
-    if (appOpacity === 1 && view !== 'profile') { 
+    if (appOpacity === 1 && view !== 'profile' && !expandedGameId) { 
       window.addEventListener("keydown", handleKeyDown);
       window.addEventListener("keyup", handleKeyUp);
     }
     
     return cleanup;
-  }, [handleKeyDown, handleKeyUp, appOpacity, view]);
+  }, [handleKeyDown, handleKeyUp, appOpacity, view, expandedGameId]); 
 
   
+  // O JOGO EXPANDIDO
+  const expandedGame = games.find(g => g.id === expandedGameId);
+
   // --- RENDERIZAÇÃO (JSX) ---
   return (
     <div 
@@ -232,91 +232,102 @@ export default function App() {
       style={{ opacity: appOpacity, transition: 'opacity 0.2s ease-in-out' }}
     >
       
-      {/* TELA DE SELEÇÃO DE PERFIL */}
-      {view === 'profile' && (
-          <ProfileSelect 
-            profiles={PROFILES} 
-            onSelectProfile={handleProfileSelect} 
-          />
-      )}
-      
-      {view === 'home' && (
-        <>
-          <Navbar 
-            profile={selectedProfile}
-            onProfileClick={handleGoToProfileSelect} 
-          />
-          
-          <div
-            className="absolute inset-0 w-full h-full bg-cover bg-center"
-            style={{
-              backgroundImage: `url(${currentBanner})`,
-              opacity: bannerOpacity,
-              transition: "opacity 0.2s ease-in-out",
-            }}
-          >
-            <div className="absolute inset-0 bg-black/50 z-10"></div>
-            <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/90 to-transparent z-10"></div>
-          </div>
-
-          {/* CORRIGIDO: Reduzindo padding-top para que a barra de jogos fique mais alta */}
-          <main className="relative z-20 flex flex-col flex-grow justify-between h-full pt-16"> 
-            
-            {/* CORRIGIDO: Posicionamento compacto e mais à esquerda */}
-            <div className="flex space-x-3 items-center pl-4"> 
-              <GameCard
-                game={storeItem}
-                isSelected={selectedId === storeItem.id}
-                onClick={() => handleGameSelect(storeItem.id)}
-              />
-              <div className="h-20 w-px bg-gray-600"></div>
-              <div className="flex space-x-3"> {/* Espaçamento compacto de 0.75rem (space-x-3) */}
-                {games.map((game) => (
-                  <GameCard
-                    key={game.id}
-                    game={game}
-                    isSelected={selectedId === game.id} 
-                    onClick={() => handleGameSelect(game.id)}
-                  />
-                ))}
-              </div>
-              <GameCard
-                game={libraryItem}
-                isSelected={selectedId === libraryItem.id}
-                onClick={() => handleGameSelect(libraryItem.id)}
-              />
-            </div>
-
-            <div
-              key={selectedItem.id}
-              className="text-left p-8 mb-16 max-w-2xl animate-fadeIn"
-            >
-              <h2 className="text-5xl md:text-6xl font-bold tracking-tight leading-tight text-white-400 mb-4">
-                {selectedItem.title}
-              </h2>
-              {selectedItem.id === storeItem.id && (
-                <>
-                  <p className="text-xl md:text-2xl font-light leading-relaxed text-gray-200 mb-8">
-                    Damos-te as boas-vindas à próxima geração.
-                  </p>
-                  <p className="text-lg text-gray-400">
-                    Dos mais recentes lançamentos a coleções primorosas, há algo
-                    para todos.
-                  </p>
-                </>
-              )}
-            </div>
-          </main>
-        </>
-      )}
-
-      {view === 'library' && (
-        <LibraryGrid 
-          games={games} 
-          onBack={() => handleChangeView('home')} 
-          selectedIndex={libraryIndex}
-          onGameSelect={setLibraryIndex} 
+      {/* TELA DE DETALHE DO JOGO (Expansão) - Prioridade Máxima */}
+      {expandedGame && (
+        <GameDetailScreen
+          game={expandedGame}
+          onCollapse={handleGameCollapse}
         />
+      )}
+
+      {/* TELA DE SELEÇÃO DE PERFIL / HOME / LIBRARY (só renderiza se NÃO estiver expandido) */}
+      {!expandedGame && (
+        <>
+          {view === 'profile' && (
+              <ProfileSelect 
+                profiles={PROFILES} 
+                onSelectProfile={handleProfileSelect} 
+              />
+          )}
+          
+          {view === 'home' && (
+            <>
+              <Navbar 
+                profile={selectedProfile}
+                onProfileClick={handleGoToProfileSelect} 
+              />
+              
+              <div
+                className="absolute inset-0 w-full h-full bg-cover bg-center"
+                style={{
+                  backgroundImage: `url(${currentBanner})`,
+                  opacity: bannerOpacity,
+                  transition: "opacity 0.2s ease-in-out",
+                }}
+              >
+                <div className="absolute inset-0 bg-black/50 z-10"></div>
+                <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/90 to-transparent z-10"></div>
+              </div>
+
+              <main className="relative z-20 flex flex-col flex-grow justify-between h-full pt-16"> 
+                
+                <div className="flex space-x-3 items-center pl-4"> 
+                  <GameCard
+                    game={storeItem}
+                    isSelected={selectedId === storeItem.id}
+                    onClick={() => handleGameSelect(storeItem.id)}
+                  />
+                  <div className="h-20 w-px bg-gray-600"></div>
+                  <div className="flex space-x-3"> 
+                    {games.map((game) => (
+                      <GameCard
+                        key={game.id}
+                        game={game}
+                        isSelected={selectedId === game.id} 
+                        onClick={() => handleGameSelect(game.id)}
+                      />
+                    ))}
+                  </div>
+                  <GameCard
+                    game={libraryItem}
+                    isSelected={selectedId === libraryItem.id}
+                    onClick={() => handleGameSelect(libraryItem.id)}
+                  />
+                </div>
+
+                <div
+                  key={selectedItem.id}
+                  className="text-left p-8 mb-16 max-w-2xl animate-fadeIn"
+                >
+                  <h2 className="text-5xl md:text-6xl font-bold tracking-tight leading-tight text-white mb-4">
+                    {selectedItem.title}
+                  </h2>
+                  {selectedItem.id === storeItem.id && (
+                    <>
+                      <p className="text-xl md:text-2xl font-light leading-relaxed text-gray-200 mb-8">
+                        Damos-te as boas-vindas à próxima geração.
+                      </p>
+                      <p className="text-lg text-gray-400">
+                        Dos mais recentes lançamentos a coleções primorosas, há algo
+                        para todos.
+                      </p>
+                    </>
+                  )}
+                </div>
+              </main>
+            </>
+          )}
+
+          {view === 'library' && (
+            <LibraryGrid 
+              games={games} 
+              onBack={() => handleChangeView('home')} 
+              selectedIndex={libraryIndex}
+              onGameSelect={setLibraryIndex}
+              onGameExpand={handleGameExpand}
+            />
+          )}
+        </>
       )}
     </div>
   );
