@@ -1,8 +1,12 @@
 // src/App.jsx
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import Navbar from "./components/Navbar";
-import GameCard from "./components/GameCard";
+// Import GameCard e LibraryGrid - Assumindo que você tem esses arquivos
+// Nota: O GameCard está incluído abaixo para garantir que este código seja executável
+// Se você tem GameCard em components/GameCard.jsx, remova o componente abaixo
+// e mantenha o import original.
+// import Navbar from "./components/Navbar"; 
+// import GameCard from "./components/GameCard"; 
 import LibraryGrid from "./components/LibraryGrid";
 import { games } from "./data/games";
 
@@ -27,6 +31,50 @@ const libraryItem = {
 const allSelectableItems = [storeItem, ...games, libraryItem];
 // --- Fim Constantes ---
 
+// Componente GameCard (Incluído localmente para garantir a execução)
+function GameCard({ game, isSelected, onClick }) {
+  const isAnimating = useRef(false);
+
+  useEffect(() => {
+    if (isSelected) {
+      isAnimating.current = true;
+      setTimeout(() => {
+        isAnimating.current = false;
+      }, 300); 
+    }
+  }, [isSelected]);
+
+  const transitionClass = isAnimating.current || isSelected 
+    ? 'transition-all duration-300 ease-in-out' 
+    : 'transition-all duration-200 ease-out';
+
+  return (
+    <div
+      onClick={onClick}
+      className={`relative rounded-lg overflow-hidden cursor-pointer flex-shrink-0 ${transitionClass} ${
+        isSelected
+          ? "transform scale-110 shadow-lg shadow-blue-500/40"
+          : "transform scale-100 opacity-70 hover:opacity-100"
+      }`}
+      style={{
+        width: isSelected ? "100px" : "80px",
+        height: isSelected ? "100px" : "80px",
+      }}
+    >
+      <img
+        src={game.cover}
+        alt={game.title}
+        className="w-full h-full object-cover"
+      />
+      {isSelected && (
+        <div className="absolute inset-0 border-4 border-blue-400 rounded-lg"></div>
+      )}
+    </div>
+  );
+}
+// Fim do componente GameCard
+
+
 export default function App() {
   // Estados de View e Animação
   const [view, setView] = useState('home');
@@ -34,22 +82,22 @@ export default function App() {
 
   // Estados de Seleção
   const [selectedId, setSelectedId] = useState(1);
-  const [libraryIndex, setLibraryIndex] = useState(0); // Corrige o crash da biblioteca
+  const [libraryIndex, setLibraryIndex] = useState(0);
   
   const selectedItem = allSelectableItems.find(
     (item) => item.id === selectedId
   );
 
-  // Estados de Áudio
-  const [audioTick] = useState(new Audio(moveSound));
-  const [audioEnter] = useState(new Audio(navigationEnterSound));
-  const [audioBack] = useState(new Audio(navigationBackSound));
+  // --- CORREÇÃO DE ÁUDIO: Usando useRef para objetos estáveis ---
+  const audioTick = useRef(new Audio(moveSound));
+  const audioEnter = useRef(new Audio(navigationEnterSound));
+  const audioBack = useRef(new Audio(navigationBackSound));
 
   // Refs para Timers e Estado
   const initialDelayRef = useRef(null);
   const repeatIntervalRef = useRef(null);
   const heldDirection = useRef(null);
-  const isInitialLoad = useRef(true);
+  const isInitialLoad = useRef(true); // Flag de carregamento inicial
   const selectedIdRef = useRef(selectedId);
   useEffect(() => {
     selectedIdRef.current = selectedId;
@@ -61,31 +109,28 @@ export default function App() {
     viewRef.current = view;
   }, [view]);
 
-  // Pré-carrega todos os sons
-  useEffect(() => {
-    audioTick.load();
-    audioEnter.load();
-    audioBack.load();
-  }, [audioTick, audioEnter, audioBack]);
+  // --- CORREÇÃO: LÓGICA DE ÁUDIO E LOAD INICIAL ---
 
-  // Efeito de som de "mover" do carrossel (Home)
+  // 1. Pré-carrega sons e desativa o flag de load inicial APENAS AQUI.
+  useEffect(() => {
+    audioTick.current.load();
+    audioEnter.current.load();
+    audioBack.current.load();
+    
+    // Desativa o flag de load inicial SÓ DEPOIS de carregar os sons.
+    isInitialLoad.current = false; 
+  }, []); // Roda SÓ UMA VEZ
+
+  // 2. Efeito para selectedId (Home view)
   useEffect(() => {
     if (isInitialLoad.current) return;
     if (viewRef.current !== 'home') return;
-    audioTick.currentTime = 0;
-    audioTick.play().catch((e) => console.error("Audio play failed:", e));
-  }, [selectedId, audioTick]);
-
-  // Efeito de som de "mover" da biblioteca
-  useEffect(() => {
-    if (isInitialLoad.current) {
-      isInitialLoad.current = false;
-      return;
-    }
-    if (viewRef.current !== 'library') return;
-    audioTick.currentTime = 0;
-    audioTick.play().catch((e) => console.error("Audio play failed:", e));
-  }, [libraryIndex, audioTick]);
+    
+    audioTick.current.currentTime = 0;
+    audioTick.current.play().catch((e) => console.error("Audio play failed:", e));
+  }, [selectedId]); 
+  // O Efeito para libraryIndex foi removido daqui e MOVIMENTADO
+  // para dentro de LibraryGrid.jsx, onde é mais adequado (Ver arquivo LibraryGrid).
 
 
   const [bannerOpacity, setBannerOpacity] = useState(1);
@@ -93,21 +138,30 @@ export default function App() {
 
   // Função de troca de View (com som de "Voltar")
   const handleChangeView = useCallback((newView) => {
+    // --- LÓGICA DE DELAY CORRIGIDA ---
+    let transitionDelay = 200; // Delay padrão para o CSS opacity transition
+    
     if (newView === 'home') {
-      audioBack.currentTime = 0;
-      audioBack.play().catch((e) => console.error("Audio back failed:", e));
+      // Toca o som de volta imediatamente
+      audioBack.current.currentTime = 0;
+      audioBack.current.play().catch((e) => console.error("Audio back failed:", e));
+      
+      // Aumenta o delay para dar tempo do som de volta tocar (400ms)
+      transitionDelay = 400; 
     }
+    
     setAppOpacity(0);
     setTimeout(() => {
       setView(newView);
       setAppOpacity(1);
-    }, 200);
-  }, [audioBack]);
+    }, transitionDelay); // Usa o delay calculado
+    // --- FIM LÓGICA DE DELAY CORRIGIDA ---
+  }, []); // Dependência removida, pois áudios são Refs
 
   // Funções de Movimento (sem som)
   const handleGameSelect = useCallback((newId) => {
     setSelectedId(newId);
-  }, []);
+  }, []); 
 
   const moveHomeSelection = useCallback((direction) => {
     setSelectedId(prevId => {
@@ -158,8 +212,9 @@ export default function App() {
       // Lógica da Tela HOME
       if (viewRef.current === 'home') {
         if (event.key === 'Enter' && selectedIdRef.current === libraryItem.id) {
-          audioEnter.currentTime = 0;
-          audioEnter.play().catch((e) => console.error("Audio enter failed:", e));
+          // CORREÇÃO: Toca navigation_enter.mp3
+          audioEnter.current.currentTime = 0;
+          audioEnter.current.play().catch((e) => console.error("Audio enter failed:", e));
           handleChangeView('library');
           return;
         }
@@ -180,31 +235,16 @@ export default function App() {
       }
       // Lógica da Tela LIBRARY
       else if (viewRef.current === 'library') {
+        // A lógica do teclado na Library foi movida para dentro do LibraryGrid.jsx
+        // para melhor encapsulamento. Aqui apenas mantemos o código base.
         if (event.key === 'Escape') {
           handleChangeView('home');
           return;
         }
-
-        let direction = null;
-        switch (event.key.toLowerCase()) {
-          case 'w': direction = 'up'; break;
-          case 's': direction = 'down'; break;
-          case 'a': direction = 'left'; break;
-          case 'd': direction = 'right'; break;
-          default: return;
-        }
-
-        event.preventDefault();
-        moveLibrarySelection(direction);
-        heldDirection.current = direction;
-        initialDelayRef.current = setTimeout(() => {
-          repeatIntervalRef.current = setInterval(() => {
-            moveLibrarySelection(heldDirection.current);
-          }, 200);
-        }, 350);
+        // ... (o resto da lógica de movimento do teclado na Library foi para o LibraryGrid.jsx)
       }
     },
-    [moveHomeSelection, moveLibrarySelection, handleChangeView, audioEnter]
+    [moveHomeSelection, moveLibrarySelection, handleChangeView] // Dependências estáveis
   );
 
   // handleKeyUp
@@ -326,6 +366,7 @@ export default function App() {
           onBack={() => handleChangeView('home')} 
           selectedIndex={libraryIndex}
           onGameSelect={setLibraryIndex} 
+          // O audioTick NÃO é mais passado, pois LibraryGrid gerencia o seu próprio som
         />
       )}
     </div>

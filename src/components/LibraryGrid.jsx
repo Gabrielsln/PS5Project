@@ -1,29 +1,60 @@
 // src/components/LibraryGrid.jsx
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import moveSound from '../sound/move.mp3'; // Importa o som localmente para uso exclusivo
 
-// Recebe o audioTick do App.jsx
-export default function LibraryGrid({ games, onBack, audioTick = new Audio() }) {
+// As props selectedIndex/onGameSelect de App.jsx serão ignoradas aqui para manter
+// a lógica de estado de navegação local, como estava no seu LibraryGrid.
+
+export default function LibraryGrid({ games, onBack }) { 
   
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  // Refs para os timers
+  // --- NOVO ESTADO: Adiciona controle para atrasar o som de mover ---
+  const [isSoundReady, setIsSoundReady] = useState(false);
+
+  // --- CORREÇÃO DE ÁUDIO: Adiciona objeto Audio local e estável ---
+  const audioTick = useRef(new Audio(moveSound)); 
+
+  // Refs para os timers e flag de load
   const initialDelayRef = useRef(null);
   const repeatIntervalRef = useRef(null);
   const heldDirection = useRef(null);
-  const isInitialLoad = useRef(true); // Para não tocar som na carga
+  const isInitialLoad = useRef(true); 
 
-  // --- CORREÇÃO: Efeito de Som Separado ---
+  // --- NOVO useEffect: Adiciona um atraso de  para o som de mover ---
   useEffect(() => {
+    // Dá um tempo para o som de entrada ('navigation_enter.mp3') terminar
+    const timer = setTimeout(() => {
+      setIsSoundReady(true);
+    }, 700); 
+
+    return () => clearTimeout(timer);
+  }, []); // Roda SÓ UMA VEZ na montagem
+
+  // --- Efeito de Som Separado (para o som de mover na grid) ---
+  useEffect(() => {
+    // 1. Atraso na inicialização.
     if (isInitialLoad.current) {
       isInitialLoad.current = false;
       return;
     }
-    audioTick.currentTime = 0;
-    audioTick.play().catch((e) => console.error("Audio play failed:", e));
-  }, [selectedIndex, audioTick]); // Toca quando o índice muda
 
-  // --- CORREÇÃO: Função de Movimento (sem som) ---
+    // 2. VERIFICAÇÃO ADICIONAL: Só toca se isSoundReady for true (após o delay)
+    if (!isSoundReady) return;
+
+    // 3. Toca o som de mover.
+    audioTick.current.currentTime = 0; 
+    audioTick.current.play().catch((e) => console.error("Audio play failed:", e)); 
+  }, [selectedIndex, isSoundReady]); // Adicione isSoundReady como dependência
+
+  // --- onBack (para ser estável) ---
+  const onBackRef = useRef(onBack);
+  useEffect(() => {
+    onBackRef.current = onBack;
+  }, [onBack]);
+
+  // --- Função de Movimento (sem som) ---
   const moveSelection = useCallback((direction) => {
     const COLS = 6;
     const numGames = games.length;
@@ -50,22 +81,14 @@ export default function LibraryGrid({ games, onBack, audioTick = new Audio() }) 
       
       return (newIndex !== prevIndex) ? newIndex : prevIndex;
     });
-  }, [games.length]); // <-- Dependência estável!
+  }, [games.length]);
 
-  // --- CORREÇÃO: onBack (para ser estável) ---
-  // Embrulhamos a função 'onBack' (que vem das props) em um ref
-  // para que 'handleKeyDown' não precise depender dela.
-  const onBackRef = useRef(onBack);
-  useEffect(() => {
-    onBackRef.current = onBack;
-  }, [onBack]);
-
-  // --- CORREÇÃO: handleKeyDown (com dependências estáveis) ---
+  // --- handleKeyDown ---
   const handleKeyDown = useCallback((event) => {
     if (event.repeat) return;
 
     if (event.key === 'Escape') {
-      onBackRef.current(); // Chama a função a partir do Ref
+      onBackRef.current(); 
       return;
     }
 
@@ -80,7 +103,7 @@ export default function LibraryGrid({ games, onBack, audioTick = new Audio() }) 
 
     event.preventDefault();
     
-    moveSelection(direction); // Move uma vez
+    moveSelection(direction); 
     heldDirection.current = direction;
 
     if (initialDelayRef.current) clearTimeout(initialDelayRef.current);
@@ -92,7 +115,7 @@ export default function LibraryGrid({ games, onBack, audioTick = new Audio() }) 
       }, 200);
     }, 350);
 
-  }, [moveSelection]); // <-- Dependências estáveis!
+  }, [moveSelection]);
 
   // handleKeyUp (sem alteração)
   const handleKeyUp = useCallback((event) => {
@@ -116,7 +139,7 @@ export default function LibraryGrid({ games, onBack, audioTick = new Audio() }) 
         repeatIntervalRef.current = null;
       }
     }
-  }, []); // <-- Estável!
+  }, []);
 
   // useEffect dos Listeners (sem alteração)
   useEffect(() => {
@@ -129,7 +152,7 @@ export default function LibraryGrid({ games, onBack, audioTick = new Audio() }) 
       if (initialDelayRef.current) clearTimeout(initialDelayRef.current);
       if (repeatIntervalRef.current) clearInterval(repeatIntervalRef.current);
     };
-  }, [handleKeyDown, handleKeyUp]); // <-- Dependências estáveis!
+  }, [handleKeyDown, handleKeyUp]);
 
   // --- RENDERIZAÇÃO (JSX) ---
   return (
@@ -151,7 +174,6 @@ export default function LibraryGrid({ games, onBack, audioTick = new Audio() }) 
                   flex flex-col cursor-pointer transition-transform duration-150 
                   ${isSelected ? 'scale-110 ring-2 ring-blue-500' : 'hover:scale-105'}
                 `}
-                // Adicionando onClick à grade para navegação
                 onClick={() => setSelectedIndex(index)}
               >
                 <img 
