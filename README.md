@@ -39,6 +39,13 @@ O projeto é organizado para máxima clareza:
 
 https://interface-videogame.vercel.app/
 
+**COMANDOS DE INTERFACE:**
+
+W/A/S/D - mover entre os jogos
+Enter - mostrar informações do jogo/selecionar perfil
+ESC - retornar a biblioteca/interface principal
+
+
 ## ▶️ Como Rodar o Projeto Localmente
 
 Siga estes passos para configurar o ambiente de desenvolvimento:
