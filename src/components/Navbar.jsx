@@ -1,6 +1,6 @@
 // src/components/Navbar.jsx
 
-import React, { useState, useEffect } from 'react'; // Importamos useState e useEffect
+import React, { useState, useEffect } from 'react'; 
 
 export default function Navbar({ profile, onProfileClick }) { 
   

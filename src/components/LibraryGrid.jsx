@@ -118,8 +118,7 @@ export default function LibraryGrid({ games, onBack, onGameExpand }) {
     }
   }, []);
 
-  // CORREÇÃO ESSENCIAL: A matriz de dependência deve estar vazia [] 
-  // para garantir que os listeners globais sejam atribuídos e removidos apenas uma vez
+ 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
@@ -130,9 +129,9 @@ export default function LibraryGrid({ games, onBack, onGameExpand }) {
       if (initialDelayRef.current) clearTimeout(initialDelayRef.current);
       if (repeatIntervalRef.current) clearInterval(repeatIntervalRef.current);
     };
-  }, [handleKeyDown, handleKeyUp]); // Dependências do handler para estabilidade
+  }, [handleKeyDown, handleKeyUp]); 
 
-  // ... (Restante do JSX omitido por brevidade, mas o que você tinha está correto)
+ 
   
   return (
     <div className="min-h-screen w-full relative bg-cover bg-center bg-fixed" style={{ backgroundImage: `url(/images/cyberpunk_banner.png)` }}>

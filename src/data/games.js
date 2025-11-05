@@ -22,7 +22,7 @@ export const games = [
     id: 9,
     title: "Grand Theft Auto: San Andreas",
     cover: "/images/gta_san_andreas_cover.png",
-    banner: "/images/gta_san_andreas_banner.jpg",
+    banner: "/images/gta_san_andreas_banner.png",
     publisher: "Rockstar Games", // NOVO
   },
   // 4. The Last of Us Part II
@@ -54,7 +54,7 @@ export const games = [
     id: 7,
     title: "Resident Evil 4",
     cover: "/images/resident_evil_4_cover.avif",
-    banner: "/images/resident_evil_4_banner.webp",
+    banner: "/images/resident_evil_4.jpg",
     publisher: "Capcom", // NOVO
   },
   // 8. Batman: Arkham Knight
