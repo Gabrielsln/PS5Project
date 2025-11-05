@@ -45,7 +45,7 @@ const ProfileCard = ({ profile, isSelected, onClick }) => {
 export default function ProfileSelect({ profiles, onSelectProfile }) {
   const [selectedProfileIndex, setSelectedProfileIndex] = useState(0);
 
-  
+  // NOVO: Handler unificado para cliques e navegação
   const handleProfileClick = useCallback((index) => {
     const profile = profiles[index];
     
@@ -82,6 +82,7 @@ export default function ProfileSelect({ profiles, onSelectProfile }) {
 
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center relative bg-black">
+      {/* BACKGROUND CORRIGIDO */}
       <div 
         className="absolute inset-0 bg-cover bg-center" 
         style={{ backgroundImage: `url(/images/background_login.jpg)` }} 
@@ -101,6 +102,7 @@ export default function ProfileSelect({ profiles, onSelectProfile }) {
               key={profile.id}
               profile={profile}
               isSelected={index === selectedProfileIndex}
+              // O clique do mouse agora chama o handleProfileClick, passando o índice
               onClick={() => handleProfileClick(index)} 
             />
           ))}

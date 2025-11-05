@@ -59,6 +59,9 @@ Siga estes passos para configurar o ambiente de desenvolvimento:
     ```
     O aplicativo será aberto em `http://localhost:3000`.
 
+4. **Executar o Projeto pelo Vercel:**
+
+https://interface-games.vercel.app/
 
 **Autor:** Gabriel Silva (gabrielsln)
 

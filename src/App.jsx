@@ -1,4 +1,4 @@
-// src/App.jsx
+// src/App.jsx (CORRIGIDO: Link da PS Store e Documentação)
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import GameCard from "./components/GameCard";
@@ -22,9 +22,8 @@ const PROFILES = [
   { id: 1, name: "Kratos", imageUrl: "/images/kratos_icon.jpeg", action: "home" },
   { id: 2, name: "Documentação", imageUrl: "/images/document_icon.png", action: "docs" },
 ];
-
-// --- NOVO: URL da PlayStation Store ---
-const PS_STORE_URL = "https://store.playstation.com/pt-br/pages/latest"; //
+const PS_STORE_URL = "https://store.playstation.com/pt-br/pages/latest"; 
+const DOCS_URL = "https://github.com/Gabrielsln/PS5Project/blob/main/README.md"; // URL do README
 
 
 export default function App() {
@@ -94,32 +93,7 @@ export default function App() {
     }, transitionDelay); 
   }, []);
   
-  // HANDLER DE SELEÇÃO DE PERFIL
-  const handleProfileSelect = useCallback((profile) => {
-    setSelectedProfile(profile);
-    
-    audioEnter.current.currentTime = 0;
-    audioEnter.current.play().catch((e) => console.error("Audio enter failed:", e));
-
-    if (profile.action === 'home') {
-      setView('home'); 
-    } else if (profile.action === 'docs') {
-      alert("Abrindo Documentação do Site...");
-    }
-  }, []); 
-
-  // HANDLER DE VOLTA DO PERFIL (Usado no Navbar)
-  const handleGoToProfileSelect = useCallback(() => {
-      audioBack.current.currentTime = 0;
-      audioBack.current.play().catch((e) => console.error("Audio back failed:", e));
-      setView('profile');
-  }, []);
-
-  const handleGameSelect = useCallback((newId) => {
-    setSelectedId(newId);
-  }, []);
-
-  // HANDLERS DE EXPANSÃO
+  // HANDLERS DE EXPANSÃO (DECLARADOS PRIMEIRO)
   const handleGameExpand = useCallback((gameId) => {
     audioEnter.current.currentTime = 0;
     audioEnter.current.play().catch((e) => console.error("Audio enter failed:", e));
@@ -132,11 +106,40 @@ export default function App() {
     setExpandedGameId(null);
   }, []);
   
+  // --- NOVO HANDLER: ABRIR DOCUMENTAÇÃO ---
+  const handleOpenDocumentation = useCallback(() => {
+      window.open(DOCS_URL, '_blank'); // Abre em nova aba
+  }, []);
 
-  // --- FUNÇÃO DE CLIQUE PADRÃO NA HOME (COM CORREÇÃO DA STORE) ---
+  // HANDLER DE SELEÇÃO DE PERFIL
+  const handleProfileSelect = useCallback((profile) => {
+    setSelectedProfile(profile);
+    
+    audioEnter.current.currentTime = 0;
+    audioEnter.current.play().catch((e) => console.error("Audio enter failed:", e));
+
+    if (profile.action === 'home') {
+      setView('home'); 
+    } else if (profile.action === 'docs') {
+      handleOpenDocumentation(); // CHAMA O NOVO HANDLER
+    }
+  }, [handleOpenDocumentation]); 
+
+  // HANDLER DE VOLTA DO PERFIL (Usado no Navbar)
+  const handleGoToProfileSelect = useCallback(() => {
+      audioBack.current.currentTime = 0;
+      audioBack.current.play().catch((e) => console.error("Audio back failed:", e));
+      setView('profile');
+  }, []);
+
+  const handleGameSelect = useCallback((newId) => {
+    setSelectedId(newId);
+  }, []);
+
+  // FUNÇÃO DE CLIQUE PADRÃO NA HOME (COM CORREÇÃO DA STORE)
   const handleHomeGameClick = useCallback((item) => {
     if (item.id === storeItem.id) {
-      // CORREÇÃO: Abre a Store em nova aba/janela
+      // Abre a Store em nova aba/janela
       window.open(PS_STORE_URL, '_blank');
       return;
     }
@@ -145,10 +148,9 @@ export default function App() {
       return;
     }
     
-    // Se for um jogo normal, EXPANDA
+    // Se for um jogo normal, EXPANDE
     handleGameExpand(item.id);
   }, [handleGameExpand, handleChangeView]); 
-  // -------------------------------------------------------------
 
 
   // FUNÇÃO DE MOVIMENTO NA HOME (mantida e funcional)
@@ -287,7 +289,8 @@ export default function App() {
             <>
               <Navbar 
                 profile={selectedProfile}
-                onProfileClick={handleGoToProfileSelect} 
+                onProfileClick={handleGoToProfileSelect}
+                onDocumentationClick={handleOpenDocumentation} // NOVO: Passa a função para o Navbar
               />
               
               <div
