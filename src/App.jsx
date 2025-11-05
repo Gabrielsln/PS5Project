@@ -5,7 +5,7 @@ import GameCard from "./components/GameCard";
 import LibraryGrid from "./components/LibraryGrid";
 import ProfileSelect from "./components/ProfileSelect"; 
 import Navbar from "./components/Navbar"; 
-import GameDetailScreen from "./components/GameDetailScreen"; // Importação necessária
+import GameDetailScreen from "./components/GameDetailScreen"; 
 import { games } from "./data/games";
 
 // Importa todos os sons
@@ -19,9 +19,12 @@ const libraryItem = { id: 99, title: "Biblioteca de Jogos", cover: "/images/libr
 const allSelectableItems = [storeItem, ...games, libraryItem];
 // --- Constantes de PERFIL ---
 const PROFILES = [
-  { id: 1, name: "Kratos", imageUrl: "/images/kratos_icon.jpeg", action: "home" }, // CORRIGIDO: kratos_icon.jpeg
+  { id: 1, name: "Kratos", imageUrl: "/images/kratos_icon.jpeg", action: "home" },
   { id: 2, name: "Documentação", imageUrl: "/images/document_icon.png", action: "docs" },
 ];
+
+// --- NOVO: URL da PlayStation Store ---
+const PS_STORE_URL = "https://store.playstation.com/pt-br/pages/latest"; //
 
 
 export default function App() {
@@ -116,7 +119,7 @@ export default function App() {
     setSelectedId(newId);
   }, []);
 
-  // --- HANDLERS DE EXPANSÃO ---
+  // HANDLERS DE EXPANSÃO
   const handleGameExpand = useCallback((gameId) => {
     audioEnter.current.currentTime = 0;
     audioEnter.current.play().catch((e) => console.error("Audio enter failed:", e));
@@ -128,7 +131,25 @@ export default function App() {
     audioBack.current.play().catch((e) => console.error("Audio back failed:", e));
     setExpandedGameId(null);
   }, []);
-  // -----------------------------
+  
+
+  // --- FUNÇÃO DE CLIQUE PADRÃO NA HOME (COM CORREÇÃO DA STORE) ---
+  const handleHomeGameClick = useCallback((item) => {
+    if (item.id === storeItem.id) {
+      // CORREÇÃO: Abre a Store em nova aba/janela
+      window.open(PS_STORE_URL, '_blank');
+      return;
+    }
+    if (item.id === libraryItem.id) {
+      handleChangeView('library');
+      return;
+    }
+    
+    // Se for um jogo normal, EXPANDA
+    handleGameExpand(item.id);
+  }, [handleGameExpand, handleChangeView]); 
+  // -------------------------------------------------------------
+
 
   // FUNÇÃO DE MOVIMENTO NA HOME (mantida e funcional)
   const moveHomeSelection = useCallback((direction) => {
@@ -144,8 +165,6 @@ export default function App() {
     });
   }, [allSelectableItems]);
 
-  // FUNÇÃO DE MOVIMENTO NA LIBRARY (REMOVIDA)
-  // Removida para garantir que o controle de teclado seja exclusivo do LibraryGrid.jsx
   
   useEffect(() => {
     if (view !== 'home') return;
@@ -164,11 +183,25 @@ export default function App() {
       if (viewRef.current === 'profile') return; 
 
       if (viewRef.current === 'home') {
-        if (event.key === 'Enter' && selectedIdRef.current === libraryItem.id) {
-          audioEnter.current.currentTime = 0;
-          audioEnter.current.play().catch((e) => console.error("Audio enter failed:", e));
-          handleChangeView('library');
-          return;
+        // LÓGICA DO ENTER NA HOME (COM CORREÇÃO DA STORE)
+        if (event.key === 'Enter') {
+            const currentItem = allSelectableItems.find(item => item.id === selectedIdRef.current);
+
+            if (currentItem.id === libraryItem.id) {
+                // Se for a Biblioteca, navega
+                audioEnter.current.currentTime = 0;
+                audioEnter.current.play().catch((e) => console.error("Audio enter failed:", e));
+                handleChangeView('library');
+                return;
+            } else if (currentItem.id === storeItem.id) {
+                // Se for a Store, abre o site
+                window.open(PS_STORE_URL, '_blank');
+                return;
+            } else {
+                // Se for um Jogo (não a Store), EXPANDE
+                handleGameExpand(currentItem.id);
+                return;
+            }
         }
         
         let direction = null;
@@ -189,7 +222,7 @@ export default function App() {
           // Deixa o LibraryGrid.jsx lidar com Enter e Movimento.
       }
     },
-    [handleChangeView, moveHomeSelection] 
+    [handleChangeView, moveHomeSelection, handleGameExpand] 
   );
 
   const handleKeyUp = useCallback((event) => {
@@ -275,7 +308,7 @@ export default function App() {
                   <GameCard
                     game={storeItem}
                     isSelected={selectedId === storeItem.id}
-                    onClick={() => handleGameSelect(storeItem.id)}
+                    onClick={() => handleHomeGameClick(storeItem)}
                   />
                   <div className="h-20 w-px bg-gray-600"></div>
                   <div className="flex space-x-3"> 
@@ -284,14 +317,14 @@ export default function App() {
                         key={game.id}
                         game={game}
                         isSelected={selectedId === game.id} 
-                        onClick={() => handleGameSelect(game.id)}
+                        onClick={() => handleHomeGameClick(game)}
                       />
                     ))}
                   </div>
                   <GameCard
                     game={libraryItem}
                     isSelected={selectedId === libraryItem.id}
-                    onClick={() => handleGameSelect(libraryItem.id)}
+                    onClick={() => handleHomeGameClick(libraryItem)}
                   />
                 </div>
 

@@ -22,7 +22,8 @@ export default function GameCard({ game, isSelected, onClick }) {
             : "opacity-70 hover:opacity-100 z-20"
         }
       `}
-      onClick={onClick}
+      // CORRIGIDO: Agora o onClick é chamado com o item 'game'
+      onClick={() => onClick(game)} 
     >
       <div
         className={`
@@ -39,7 +40,6 @@ export default function GameCard({ game, isSelected, onClick }) {
           className="w-full h-full object-cover"
         />
       </div>
-      {/* Opcional: Removido o título para maximizar a visualização do banner */}
     </div>
   );
 }
