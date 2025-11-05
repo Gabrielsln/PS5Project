@@ -34,6 +34,11 @@ O projeto é organizado para máxima clareza:
 | `GameDetailScreen.jsx` | Tela de visualização de detalhes do jogo, com sinopse dinâmica e animação de expansão. |
 | `src/data/games.js` | Fonte de dados dos jogos, incluindo `title`, `publisher` (editora) e `sinopse` (implícita no `GameDetailScreen`). |
 
+
+**Executar o Projeto pelo Vercel(funcional):**
+
+https://interface-videogame.vercel.app/
+
 ## ▶️ Como Rodar o Projeto Localmente
 
 Siga estes passos para configurar o ambiente de desenvolvimento:
@@ -59,9 +64,6 @@ Siga estes passos para configurar o ambiente de desenvolvimento:
     ```
     O aplicativo será aberto em `http://localhost:3000`.
 
-4. **Executar o Projeto pelo Vercel:**
-
-https://interface-games.vercel.app/
 
 **Autor:** Gabriel Silva (gabrielsln)
 
