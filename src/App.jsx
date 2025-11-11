@@ -161,7 +161,7 @@ export default function App() {
       }
       return (newIndex !== currentIndex) ? allSelectableItems[newIndex].id : prevId;
     });
-  }, [allSelectableItems]);
+  }, []);
 
   
   useEffect(() => {
