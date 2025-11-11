@@ -1,4 +1,4 @@
-// src/App.jsx (CORRIGIDO: Link da PS Store e Documentação)
+
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import GameCard from "./components/GameCard";
@@ -130,10 +130,6 @@ export default function App() {
       audioBack.current.currentTime = 0;
       audioBack.current.play().catch((e) => console.error("Audio back failed:", e));
       setView('profile');
-  }, []);
-
-  const handleGameSelect = useCallback((newId) => {
-    setSelectedId(newId);
   }, []);
 
   // FUNÇÃO DE CLIQUE PADRÃO NA HOME (COM CORREÇÃO DA STORE)
@@ -290,7 +286,7 @@ export default function App() {
               <Navbar 
                 profile={selectedProfile}
                 onProfileClick={handleGoToProfileSelect}
-                onDocumentationClick={handleOpenDocumentation} // NOVO: Passa a função para o Navbar
+                onDocumentationClick={handleOpenDocumentation} // Passa a função para o Navbar
               />
               
               <div
