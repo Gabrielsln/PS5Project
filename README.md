@@ -1,5 +1,9 @@
 # 🎮 PS5 Dashboard Clone - Interface Interativa (React & Tailwind CSS)
 
+**Executar o Projeto pelo Vercel(funcional):**
+
+https://interface-videogame.vercel.app/
+
 Este projeto é uma recriação da interface de usuário (UI) do PlayStation 5, focada na experiência de navegação por teclado e na exibição interativa de detalhes de jogos. Desenvolvido com React e estilizado com Tailwind CSS para garantir um layout moderno, responsivo e altamente personalizável.
 
 ## 🚀 Funcionalidades Principais
