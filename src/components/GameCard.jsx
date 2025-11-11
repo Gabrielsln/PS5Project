@@ -1,36 +1,36 @@
-// src/components/GameCard.jsx (CORRIGIDO: Tamanho Menor e Formato Quase Quadrado)
+// src/components/GameCard.jsx (CORRIGIDO: Anel de seleção ainda mais fino 'ring-1')
 
 import React from "react";
 
 export default function GameCard({ game, isSelected, onClick }) {
   
-  // 1. Define o tamanho base dependendo do tipo de item
+  // 1. Define o tamanho base
   const isSquare = game.id === 0 || game.id === 99; // Store (0) e Library (99)
-  
-  // Ícones da Store/Library são 80x80px (w-20 h-20)
-  // Cartões de Jogo são 80x96px (w-20 h-24)
   const sizeClasses = isSquare ? "w-20 h-20" : "w-20 h-24"; 
+  
+  // Classes de transição
+  const transitionClass = 'transition-all duration-300 ease-in-out';
 
   return (
     <div
       className={`
         relative flex-shrink-0 cursor-pointer 
-        transition-all duration-300 ease-in-out
-        ${
-          isSelected
-            ? "transform scale-110 shadow-lg shadow-blue-500/50 z-30" 
-            : "opacity-70 hover:opacity-100 z-20"
-        }
+        ${transitionClass}
+        
+        // Contêiner principal: controla a opacidade e z-index
+        ${isSelected ? "z-30 opacity-100" : "opacity-70 hover:opacity-100 z-20"}
       `}
-      // CORRIGIDO: Agora o onClick é chamado com o item 'game'
       onClick={() => onClick(game)} 
     >
       <div
         className={`
-          ${sizeClasses} rounded-lg overflow-hidden border-2 
-          transition-all duration-300 ease-in-out
-          ${
-            isSelected ? "border-blue-400" : "border-transparent" 
+          ${sizeClasses} rounded-lg overflow-hidden
+          ${transitionClass}
+          
+          // CORRIGIDO: Agora usando 'ring-1' para um anel mais fino
+          ${isSelected 
+            ? 'transform scale-110 ring-1 ring-white shadow-lg shadow-white/50' 
+            : 'transform scale-100'
           }
         `}
       >

@@ -1,4 +1,4 @@
-// src/components/LibraryGrid.jsx (CORRIGIDO: Navegação e ESC Restaurados)
+// src/components/LibraryGrid.jsx (CORRIGIDO: Anel Branco)
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import moveSound from '../sound/move.mp3'; 
@@ -118,7 +118,6 @@ export default function LibraryGrid({ games, onBack, onGameExpand }) {
     }
   }, []);
 
- 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
@@ -131,10 +130,11 @@ export default function LibraryGrid({ games, onBack, onGameExpand }) {
     };
   }, [handleKeyDown, handleKeyUp]); 
 
- 
-  
   return (
-    <div className="min-h-screen w-full relative bg-cover bg-center bg-fixed" style={{ backgroundImage: `url(/images/cyberpunk_banner.png)` }}>
+    <div 
+      className="min-h-screen w-full relative bg-cover bg-center bg-fixed"
+      style={{ backgroundImage: `url(/images/cyberpunk_banner.png)` }}
+    >
       <div className="absolute inset-0 bg-black/70 z-0" />
       <div className="relative z-10 min-h-screen w-full p-8 pt-24 max-w-7xl mx-auto animate-fadeIn">
         <h1 className="text-4xl font-light mb-8">Biblioteca de Jogos</h1>
@@ -148,7 +148,8 @@ export default function LibraryGrid({ games, onBack, onGameExpand }) {
                     return (
                         <div 
                             key={game.id} 
-                            className={`flex flex-col cursor-pointer transition-transform duration-150 ${isSelected ? 'scale-110 ring-2 ring-blue-500' : 'hover:scale-105'}`}
+                            // CORRIGIDO: Anel de seleção branco
+                            className={`flex flex-col cursor-pointer transition-transform duration-150 ${isSelected ? 'scale-110 ring-2 ring-white' : 'hover:scale-105'}`}
                             onClick={() => { setSelectedIndex(index); onGameExpand(game.id); }}
                         >
                             <img src={game.cover} alt={game.title} className="w-full object-cover rounded-lg shadow-lg aspect-square"/>
