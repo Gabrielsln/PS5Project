@@ -1,5 +1,9 @@
 # 🎮 PS5 Dashboard Clone - Interface Interativa (React & Tailwind CSS)
 
+**Executar o Projeto pelo Vercel(funcional):**
+
+https://interface-videogame.vercel.app/
+
 Este projeto é uma recriação da interface de usuário (UI) do PlayStation 5, focada na experiência de navegação por teclado e na exibição interativa de detalhes de jogos. Desenvolvido com React e estilizado com Tailwind CSS para garantir um layout moderno, responsivo e altamente personalizável.
 
 ## 🚀 Funcionalidades Principais
@@ -34,6 +38,18 @@ O projeto é organizado para máxima clareza:
 | `GameDetailScreen.jsx` | Tela de visualização de detalhes do jogo, com sinopse dinâmica e animação de expansão. |
 | `src/data/games.js` | Fonte de dados dos jogos, incluindo `title`, `publisher` (editora) e `sinopse` (implícita no `GameDetailScreen`). |
 
+
+**Executar o Projeto pelo Vercel(funcional):**
+
+https://interface-videogame.vercel.app/
+
+**COMANDOS DE INTERFACE:**
+
+W/A/S/D - mover entre os jogos
+Enter - mostrar informações do jogo/selecionar perfil
+ESC - retornar a biblioteca/interface principal
+
+
 ## ▶️ Como Rodar o Projeto Localmente
 
 Siga estes passos para configurar o ambiente de desenvolvimento:
@@ -59,9 +75,6 @@ Siga estes passos para configurar o ambiente de desenvolvimento:
     ```
     O aplicativo será aberto em `http://localhost:3000`.
 
-4. **Executar o Projeto pelo Vercel:**
-
-https://interface-games.vercel.app/
 
 **Autor:** Gabriel Silva (gabrielsln)
 
