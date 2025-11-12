@@ -1,45 +1,49 @@
 // src/components/Navbar.jsx
 
-import React, { useState, useEffect } from 'react'; // Importamos useState e useEffect
+import React, { useState, useEffect } from 'react'; 
 
-export default function Navbar({ profile, onProfileClick, onDocumentationClick }) { 
+export default function Navbar({ profile, onProfileClick, onDocumentationClick, navZone, navbarIndex }) { 
   
-  // 1. ESTADO: Armazena a hora atual como um objeto Date
   const [currentTime, setCurrentTime] = useState(new Date());
 
-  // 2. EFEITO: Configura o relógio
   useEffect(() => {
-    // Função para atualizar a hora
     const updateTime = () => {
       setCurrentTime(new Date());
     };
-
-    // Configura o temporizador para atualizar a cada segundo (1000ms)
     const timerId = setInterval(updateTime, 1000);
-
-    // 3. LIMPEZA: Limpa o temporizador quando o componente é desmontado
     return () => clearInterval(timerId);
   }, []); 
 
-  // Formata a hora para HH:MM no fuso horário local do dispositivo
   const hours = String(currentTime.getHours()).padStart(2, '0');
   const minutes = String(currentTime.getMinutes()).padStart(2, '0');
   const formattedTime = `${hours}:${minutes}`;
 
-  // Dados do Perfil (Kratos)
   const profileImageUrl = profile?.imageUrl || "/images/placeholder_profile.png"; 
   const profileName = profile?.name || "Usuário";
+
+  // --- LÓGICA DE FOCO VISUAL ---
+  const isNavbarFocused = navZone === 'navbar';
+
+  // Helper para classes de Foco
+  const getFocusClasses = (index) => {
+    if (!isNavbarFocused) return 'text-gray-400 opacity-70'; // Navbar inativa
+    if (navbarIndex === index) return 'text-white scale-110'; // Item ativo
+    return 'text-gray-400 opacity-70'; // Item inativo
+  };
 
   return (
     <nav className="fixed top-0 left-0 right-0 w-full px-10 py-4 flex justify-between items-center text-gray-300 z-50">
       
       {/* Esquerda: "Jogos" e "Documentação" */}
       <div className="flex items-center space-x-8 text-xl font-semibold">
-        <span className="text-white cursor-pointer hover:text-blue-400 transition-colors duration-200">Jogos</span>
-       
-        {/* CORREÇÃO: Chama o onDocumentationClick para abrir o README */}
         <span 
-          className="cursor-pointer hover:text-blue-400 transition-colors duration-200"
+          className={`cursor-pointer transition-all duration-200 ${getFocusClasses(0)}`}
+        >
+          Jogos
+        </span>
+       
+        <span 
+          className={`cursor-pointer transition-all duration-200 ${getFocusClasses(1)}`}
           onClick={onDocumentationClick} 
         >
           Documentação
@@ -51,7 +55,14 @@ export default function Navbar({ profile, onProfileClick, onDocumentationClick }
         
         {/* Foto de Perfil (Kratos) - Clicável */}
         <div 
-          className="w-8 h-8 rounded-full border border-gray-400 cursor-pointer overflow-hidden transition-all duration-200 hover:ring-2 hover:ring-blue-400"
+          className={`
+            w-8 h-8 rounded-full cursor-pointer overflow-hidden 
+            transition-all duration-200
+            ${isNavbarFocused && navbarIndex === 2 
+              ? 'ring-2 ring-white scale-110' // Foco no Perfil
+              : 'border border-gray-400 opacity-70' // Padrão
+            }
+          `}
           onClick={onProfileClick}
           title={`Logado como: ${profileName} (Clique para trocar)`}
         >
@@ -62,7 +73,7 @@ export default function Navbar({ profile, onProfileClick, onDocumentationClick }
           />
         </div> 
         
-        {/* HORÁRIO ATUALIZADO */}
+        {/* HORÁRIO ATUALIZADO (sempre visível) */}
         <span className="text-2xl font-light">
           {formattedTime}
         </span>

@@ -12,8 +12,10 @@ import { games } from "./data/games";
 import moveSound from "./sound/move.mp3";
 import navigationEnterSound from "./sound/navigation_enter.mp3";
 import navigationBackSound from "./sound/navigation_back.mp3";
+import backgroundMusic from "./sound/background_music.mp3"; // Música do Dashboard
+import profileMusicFile from "./sound/profile_music.mp3"; // NOVO: Música da Tela de Perfil
 
-// --- Constantes de JOGOS (COM logoUrl: null) ---
+// --- Constantes de JOGOS ---
 const storeItem = { id: 0, title: "PlayStation Store", cover: "/images/ps_store_icon.png", banner: "/images/cyberpunk_banner.png", logoUrl: null };
 const libraryItem = { id: 99, title: "Biblioteca de Jogos", cover: "/images/library_icon.png", banner: "/images/gow_banner.webp", logoUrl: null };
 const allSelectableItems = [storeItem, ...games, libraryItem];
@@ -24,6 +26,8 @@ const PROFILES = [
 ];
 const PS_STORE_URL = "https://store.playstation.com/pt-br/pages/latest"; 
 const DOCS_URL = "https://github.com/Gabrielsln/PS5Project/blob/main/README.md";
+// --- Itens da Navbar ---
+const NAVBAR_ITEMS = ['jogos', 'documentacao', 'perfil'];
 
 
 export default function App() {
@@ -33,13 +37,19 @@ export default function App() {
 
   const [selectedId, setSelectedId] = useState(1); 
   const [libraryIndex, setLibraryIndex] = useState(0);
-
   const [expandedGameId, setExpandedGameId] = useState(null); 
+
+  // Estados de Navegação
+  const [navZone, setNavZone] = useState('games'); 
+  const [navbarIndex, setNavbarIndex] = useState(0); 
 
   // Refs de Áudio e Estado
   const audioTick = useRef(new Audio(moveSound));
   const audioEnter = useRef(new Audio(navigationEnterSound));
   const audioBack = useRef(new Audio(navigationBackSound));
+  const bgMusic = useRef(new Audio(backgroundMusic)); // Música do Dashboard
+  const profileMusic = useRef(new Audio(profileMusicFile)); // NOVO: Música do Perfil
+  
   const initialDelayRef = useRef(null);
   const repeatIntervalRef = useRef(null);
   const heldDirection = useRef(null);
@@ -58,22 +68,54 @@ export default function App() {
     viewRef.current = view;
   }, [selectedId, view]);
 
-  // Lógica de áudio e load inicial
+  // Lógica de áudio e load inicial (Pré-carrega TODAS as músicas)
   useEffect(() => {
     audioTick.current.load();
     audioEnter.current.load();
     audioBack.current.load();
+    bgMusic.current.load(); 
+    profileMusic.current.load(); // NOVO
     isInitialLoad.current = false; 
   }, []); 
+
+  // --- NOVO: Efeito para controlar as músicas de fundo baseado na VIEW ---
+  useEffect(() => {
+    // Define o volume padrão
+    const dashMusic = bgMusic.current;
+    const profMusic = profileMusic.current;
+    dashMusic.volume = 0.3;
+    profMusic.volume = 0.3;
+
+    if (view === 'profile') {
+      // 1. Se estamos na tela de perfil
+      dashMusic.pause(); // Para a música do dashboard
+      dashMusic.currentTime = 0;
+      
+      // Toca a música do perfil
+      profMusic.loop = true;
+      profMusic.play().catch(e => console.warn("Música de perfil falhou:", e));
+    } else {
+      // 2. Se estamos em qualquer outra tela (home, library, etc.)
+      profMusic.pause(); // Para a música do perfil
+      profMusic.currentTime = 0;
+      
+      // Toca a música do dashboard (se já não estiver tocando)
+      if (dashMusic.paused) {
+        dashMusic.loop = true;
+        dashMusic.play().catch(e => console.warn("Música do dashboard falhou:", e));
+      }
+    }
+  }, [view]); // Este efeito roda toda vez que a 'view' muda
+  // -----------------------------------------------------------------
 
   // Efeito de som para o movimento na Home
   useEffect(() => {
     if (isInitialLoad.current) return;
-    if (viewRef.current !== 'home') return;
+    if (viewRef.current !== 'home' || navZone !== 'games') return; 
     
     audioTick.current.currentTime = 0;
     audioTick.current.play().catch((e) => console.error("Audio play failed:", e));
-  }, [selectedId]); 
+  }, [selectedId, navZone]); 
 
 
   // Lógica de transição de tela
@@ -96,7 +138,7 @@ export default function App() {
   // HANDLERS DE EXPANSÃO (DECLARADOS PRIMEIRO)
   const handleGameExpand = useCallback((gameId) => {
     audioEnter.current.currentTime = 0;
-    audioEnter.current.play().catch((e) => console.error("Audio enter failed:", e));
+    audioEnter.current.play().catch((e) => console.error("Audio play failed:", e));
     setExpandedGameId(gameId); 
   }, []); 
 
@@ -119,6 +161,7 @@ export default function App() {
     audioEnter.current.play().catch((e) => console.error("Audio enter failed:", e));
 
     if (profile.action === 'home') {
+      // O novo useEffect[view] cuidará de trocar a música
       setView('home'); 
     } else if (profile.action === 'docs') {
       handleOpenDocumentation(); 
@@ -129,9 +172,10 @@ export default function App() {
   const handleGoToProfileSelect = useCallback(() => {
       audioBack.current.currentTime = 0;
       audioBack.current.play().catch((e) => console.error("Audio back failed:", e));
+      
+      // O novo useEffect[view] cuidará de trocar a música
       setView('profile');
   }, []);
-
 
   // FUNÇÃO DE CLIQUE PADRÃO NA HOME (COM CORREÇÃO DA STORE)
   const handleHomeGameClick = useCallback((item) => {
@@ -143,7 +187,6 @@ export default function App() {
       handleChangeView('library');
       return;
     }
-    
     handleGameExpand(item.id);
   }, [handleGameExpand, handleChangeView]); 
 
@@ -160,7 +203,25 @@ export default function App() {
       }
       return (newIndex !== currentIndex) ? allSelectableItems[newIndex].id : prevId;
     });
-  }, []);
+  }, []); 
+
+  // FUNÇÃO DE MOVIMENTO NA NAVBAR
+  const moveNavbarSelection = useCallback((direction) => {
+    setNavbarIndex(prevIndex => {
+        let newIndex = prevIndex;
+        if (direction === 'left') {
+            newIndex = Math.max(0, prevIndex - 1);
+        } else if (direction === 'right') {
+            newIndex = Math.min(NAVBAR_ITEMS.length - 1, prevIndex + 1);
+        }
+        
+        if (newIndex !== prevIndex) {
+            audioTick.current.currentTime = 0;
+            audioTick.current.play().catch((e) => console.error("Audio play failed:", e));
+        }
+        return newIndex;
+    });
+  }, []); 
 
   
   useEffect(() => {
@@ -177,45 +238,87 @@ export default function App() {
   const handleKeyDown = useCallback(
     (event) => {
       if (event.repeat) return;
-      if (viewRef.current === 'profile') return; 
+      if (viewRef.current === 'profile' || expandedGameId) return; 
+
+      const key = event.key.toLowerCase();
 
       if (viewRef.current === 'home') {
-        if (event.key === 'Enter') {
-            const currentItem = allSelectableItems.find(item => item.id === selectedIdRef.current);
+        
+        if (navZone === 'games') {
+          // --- Zona de Jogos (Inferior) ---
+          
+          if (key === 'w' || key === 'arrowup') {
+            setNavZone('navbar');
+            audioTick.current.currentTime = 0;
+            audioTick.current.play().catch((e) => console.error("Audio play failed:", e));
+            return;
+          }
 
+          if (key === 'enter') {
+            const currentItem = allSelectableItems.find(item => item.id === selectedIdRef.current);
             if (currentItem.id === libraryItem.id) {
                 audioEnter.current.currentTime = 0;
                 audioEnter.current.play().catch((e) => console.error("Audio enter failed:", e));
                 handleChangeView('library');
-                return;
             } else if (currentItem.id === storeItem.id) {
                 window.open(PS_STORE_URL, '_blank');
-                return;
             } else {
                 handleGameExpand(currentItem.id);
-                return;
             }
-        }
-        
-        let direction = null;
-        if (event.key === "ArrowLeft" || event.key === "a" || event.key === "A") direction = 'left';
-        if (event.key === "ArrowRight" || event.key === "d" || event.key === "D") direction = 'right';
+            return;
+          }
+          
+          let direction = null;
+          if (key === "arrowleft" || key === "a") direction = 'left';
+          if (key === "arrowright" || key === "d") direction = 'right';
 
-        if (direction) {
-          moveHomeSelection(direction);
-          heldDirection.current = direction;
-          initialDelayRef.current = setTimeout(() => {
-            repeatIntervalRef.current = setInterval(() => {
-              moveHomeSelection(heldDirection.current);
-            }, 200);
-          }, 350);
+          if (direction) {
+            moveHomeSelection(direction);
+            heldDirection.current = direction;
+            initialDelayRef.current = setTimeout(() => {
+              repeatIntervalRef.current = setInterval(() => {
+                moveHomeSelection(heldDirection.current);
+              }, 200);
+            }, 350);
+          }
+
+        } else if (navZone === 'navbar') {
+          // --- Zona da Navbar (Superior) ---
+
+          if (key === 's' || key === 'arrowdown') {
+            setNavZone('games');
+            audioTick.current.currentTime = 0;
+            audioTick.current.play().catch((e) => console.error("Audio play failed:", e));
+            return;
+          }
+
+          if (key === 'enter') {
+            if (navbarIndex === 1) { // Documentação
+                handleOpenDocumentation();
+            } else if (navbarIndex === 2) { // Perfil
+                handleGoToProfileSelect();
+            }
+            return;
+          }
+
+          let direction = null;
+          if (key === "arrowleft" || key === "a") direction = 'left';
+          if (key === "arrowright" || key === "d") direction = 'right';
+
+          if (direction) {
+            moveNavbarSelection(direction);
+          }
         }
       }
       else if (viewRef.current === 'library') {
           // Deixa o LibraryGrid.jsx lidar com Enter e Movimento.
       }
     },
-    [handleChangeView, moveHomeSelection, handleGameExpand] 
+    [
+        navZone, navbarIndex, expandedGameId,
+        handleChangeView, moveHomeSelection, handleGameExpand, 
+        handleOpenDocumentation, handleGoToProfileSelect, moveNavbarSelection
+    ] 
   );
 
   const handleKeyUp = useCallback((event) => {
@@ -281,7 +384,9 @@ export default function App() {
               <Navbar 
                 profile={selectedProfile}
                 onProfileClick={handleGoToProfileSelect}
-                onDocumentationClick={handleOpenDocumentation} 
+                onDocumentationClick={handleOpenDocumentation}
+                navZone={navZone} 
+                navbarIndex={navbarIndex} 
               />
               
               <div
@@ -301,7 +406,7 @@ export default function App() {
                 <div className="flex space-x-3 items-center pl-4"> 
                   <GameCard
                     game={storeItem}
-                    isSelected={selectedId === storeItem.id}
+                    isSelected={navZone === 'games' && selectedId === storeItem.id} 
                     onClick={() => handleHomeGameClick(storeItem)}
                   />
                   <div className="h-20 w-px bg-gray-600"></div>
@@ -310,29 +415,27 @@ export default function App() {
                       <GameCard
                         key={game.id}
                         game={game}
-                        isSelected={selectedId === game.id} 
-                        onClick={() => handleHomeGameClick(game)} 
+                        isSelected={navZone === 'games' && selectedId === game.id} 
+                        onClick={() => handleHomeGameClick(game)}
                       />
                     ))}
                   </div>
                   <GameCard
                     game={libraryItem}
-                    isSelected={selectedId === libraryItem.id}
+                    isSelected={navZone === 'games' && selectedId === libraryItem.id} 
                     onClick={() => handleHomeGameClick(libraryItem)}
                   />
                 </div>
 
-                {/* --- CORREÇÃO: ANIMAÇÃO E LÓGICA DO LOGO --- */}
                 <div
-                  key={selectedItem.id} // A chave força o React a recriar o componente, disparando a animação
-                  className="text-left p-8 mb-16 max-w-2xl animate-slideInUp" // Usa a nova animação
+                  key={selectedItem.id}
+                  className="text-left p-8 mb-16 max-w-2xl animate-slideInUp" 
                 >
-                  {/* Renderização Condicional: Logo ou Título */}
                   {selectedItem.logoUrl ? (
                     <img 
                       src={selectedItem.logoUrl} 
                       alt={`${selectedItem.title} logo`}
-                      className="h-28 mb-4" // Ajuste a altura conforme necessário
+                      className="h-28 mb-4" 
                     />
                   ) : (
                     <h2 className="text-5xl md:text-6xl font-bold tracking-tight leading-tight text-white mb-4">
@@ -340,7 +443,6 @@ export default function App() {
                     </h2>
                   )}
 
-                  {/* Descrição (Apenas para a Store) */}
                   {selectedItem.id === storeItem.id && (
                     <>
                       <p className="text-xl md:text-2xl font-light leading-relaxed text-gray-200 mb-8">
@@ -353,7 +455,6 @@ export default function App() {
                     </>
                   )}
                 </div>
-                {/* --- FIM DA CORREÇÃO --- */}
               </main>
             </>
           )}
