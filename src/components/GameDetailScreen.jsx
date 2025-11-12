@@ -1,4 +1,4 @@
-// src/components/GameDetailScreen.jsx (FINAL: SINOPSES INTEGRADAS)
+
 
 import React, { useEffect, useState } from 'react';
 

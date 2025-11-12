@@ -1,4 +1,4 @@
-// src/components/GameCard.jsx (CORRIGIDO: Brilho horizontal)
+
 
 import React from "react";
 

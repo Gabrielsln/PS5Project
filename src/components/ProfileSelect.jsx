@@ -1,8 +1,8 @@
-// src/components/ProfileSelect.jsx
+
 
 import React, { useState, useEffect, useCallback } from 'react';
 
-// Componente para o Cartão de Perfil (Sem alterações, mas incluído para referência)
+// Componente para o Cartão de Perfil 
 const ProfileCard = ({ profile, isSelected, onClick }) => {
   return (
     <div 

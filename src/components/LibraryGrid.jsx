@@ -1,4 +1,4 @@
-// src/components/LibraryGrid.jsx (CORRIGIDO: Adiciona efeito de brilho)
+
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import moveSound from '../sound/move.mp3'; 
@@ -148,7 +148,7 @@ export default function LibraryGrid({ games, onBack, onGameExpand }) {
                     return (
                         <div 
                             key={game.id} 
-                            // 1. ADICIONADO: 'relative' e 'overflow-hidden' para conter o brilho
+                            // 'relative' e 'overflow-hidden' para conter o brilho
                             className={`
                               relative overflow-hidden rounded-lg
                               flex flex-col cursor-pointer transition-transform duration-150 
@@ -162,7 +162,7 @@ export default function LibraryGrid({ games, onBack, onGameExpand }) {
                               className="w-full object-cover shadow-lg aspect-square"
                             />
                             
-                            {/* 2. ADICIONADO: O <span> de brilho (shimmer) */}
+                            {/* O <span> de brilho (shimmer) */}
                             {isSelected && (
                               <span 
                                 className="
