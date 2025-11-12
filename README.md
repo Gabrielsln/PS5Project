@@ -56,7 +56,7 @@ Siga estes passos para configurar o ambiente de desenvolvimento:
 
 1.  **Clone o Repositório:**
     ```bash
-    git clone [https://docs.github.com/pt/migrations/importing-source-code/using-the-command-line-to-import-source-code/adding-locally-hosted-code-to-github](https://docs.github.com/pt/migrations/importing-source-code/using-the-command-line-to-import-source-code/adding-locally-hosted-code-to-github)
+    git clone (https://github.com/Gabrielsln/PS5Project.git)
     cd PS5Project-main
     ```
 
