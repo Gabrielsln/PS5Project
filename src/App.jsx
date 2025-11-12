@@ -12,8 +12,8 @@ import { games } from "./data/games";
 import moveSound from "./sound/move.mp3";
 import navigationEnterSound from "./sound/navigation_enter.mp3";
 import navigationBackSound from "./sound/navigation_back.mp3";
-import backgroundMusic from "./sound/background_music.mp3"; // Música do Dashboard
-import profileMusicFile from "./sound/profile_music.mp3"; // NOVO: Música da Tela de Perfil
+import backgroundMusic from "./sound/background_music.mp3"; 
+import profileMusicFile from "./sound/profile_music.mp3"; 
 
 // --- Constantes de JOGOS ---
 const storeItem = { id: 0, title: "PlayStation Store", cover: "/images/ps_store_icon.png", banner: "/images/cyberpunk_banner.png", logoUrl: null };
@@ -47,8 +47,8 @@ export default function App() {
   const audioTick = useRef(new Audio(moveSound));
   const audioEnter = useRef(new Audio(navigationEnterSound));
   const audioBack = useRef(new Audio(navigationBackSound));
-  const bgMusic = useRef(new Audio(backgroundMusic)); // Música do Dashboard
-  const profileMusic = useRef(new Audio(profileMusicFile)); // NOVO: Música do Perfil
+  const bgMusic = useRef(new Audio(backgroundMusic)); 
+  const profileMusic = useRef(new Audio(profileMusicFile)); 
   
   const initialDelayRef = useRef(null);
   const repeatIntervalRef = useRef(null);
@@ -68,45 +68,39 @@ export default function App() {
     viewRef.current = view;
   }, [selectedId, view]);
 
-  // Lógica de áudio e load inicial (Pré-carrega TODAS as músicas)
+  // Lógica de áudio e load inicial
   useEffect(() => {
     audioTick.current.load();
     audioEnter.current.load();
     audioBack.current.load();
     bgMusic.current.load(); 
-    profileMusic.current.load(); // NOVO
+    profileMusic.current.load(); 
     isInitialLoad.current = false; 
   }, []); 
 
-  // --- NOVO: Efeito para controlar as músicas de fundo baseado na VIEW ---
+  // Efeito para controlar as músicas de fundo baseado na VIEW
   useEffect(() => {
-    // Define o volume padrão
     const dashMusic = bgMusic.current;
     const profMusic = profileMusic.current;
     dashMusic.volume = 0.3;
     profMusic.volume = 0.3;
 
     if (view === 'profile') {
-      // 1. Se estamos na tela de perfil
-      dashMusic.pause(); // Para a música do dashboard
+      dashMusic.pause(); 
       dashMusic.currentTime = 0;
       
-      // Toca a música do perfil
       profMusic.loop = true;
-      profMusic.play().catch(e => console.warn("Música de perfil falhou:", e));
+      profMusic.play().catch(e => console.warn("Música de perfil bloqueada pelo autoplay. Aguardando interação."));
     } else {
-      // 2. Se estamos em qualquer outra tela (home, library, etc.)
-      profMusic.pause(); // Para a música do perfil
+      profMusic.pause(); 
       profMusic.currentTime = 0;
       
-      // Toca a música do dashboard (se já não estiver tocando)
       if (dashMusic.paused) {
         dashMusic.loop = true;
         dashMusic.play().catch(e => console.warn("Música do dashboard falhou:", e));
       }
     }
-  }, [view]); // Este efeito roda toda vez que a 'view' muda
-  // -----------------------------------------------------------------
+  }, [view]); 
 
   // Efeito de som para o movimento na Home
   useEffect(() => {
@@ -138,7 +132,7 @@ export default function App() {
   // HANDLERS DE EXPANSÃO (DECLARADOS PRIMEIRO)
   const handleGameExpand = useCallback((gameId) => {
     audioEnter.current.currentTime = 0;
-    audioEnter.current.play().catch((e) => console.error("Audio play failed:", e));
+    audioEnter.current.play().catch((e) => console.error("Audio enter failed:", e));
     setExpandedGameId(gameId); 
   }, []); 
 
@@ -161,7 +155,6 @@ export default function App() {
     audioEnter.current.play().catch((e) => console.error("Audio enter failed:", e));
 
     if (profile.action === 'home') {
-      // O novo useEffect[view] cuidará de trocar a música
       setView('home'); 
     } else if (profile.action === 'docs') {
       handleOpenDocumentation(); 
@@ -173,7 +166,6 @@ export default function App() {
       audioBack.current.currentTime = 0;
       audioBack.current.play().catch((e) => console.error("Audio back failed:", e));
       
-      // O novo useEffect[view] cuidará de trocar a música
       setView('profile');
   }, []);
 
@@ -376,6 +368,7 @@ export default function App() {
               <ProfileSelect 
                 profiles={PROFILES} 
                 onSelectProfile={handleProfileSelect} 
+                profileMusic={profileMusic} 
               />
           )}
           
@@ -427,6 +420,7 @@ export default function App() {
                   />
                 </div>
 
+                {/* Bloco de Animação do Logo/Título */}
                 <div
                   key={selectedItem.id}
                   className="text-left p-8 mb-16 max-w-2xl animate-slideInUp" 

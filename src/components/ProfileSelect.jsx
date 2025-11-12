@@ -1,4 +1,4 @@
-// src/components/ProfileSelect.jsx (Fundo Mais Transparente)
+// src/components/ProfileSelect.jsx
 
 import React, { useState, useEffect, useCallback } from 'react';
 
@@ -45,16 +45,30 @@ const ProfileCard = ({ profile, isSelected, onClick }) => {
 };
 
 
-export default function ProfileSelect({ profiles, onSelectProfile }) {
+export default function ProfileSelect({ profiles, onSelectProfile, profileMusic }) {
   const [selectedProfileIndex, setSelectedProfileIndex] = useState(0);
 
+  // --- CORREÇÃO 1: Estabiliza a função 'playProfileMusic' com useCallback ---
+  const playProfileMusic = useCallback(() => {
+    if (profileMusic && profileMusic.current && profileMusic.current.paused) {
+      profileMusic.current.loop = true;
+      profileMusic.current.play().catch(e => console.warn("Música de perfil falhou:", e));
+    }
+  }, [profileMusic]); // Esta função só depende da ref da música
+
+  // --- CORREÇÃO 2: Unifica 'handleProfileClick' para tocar música ---
   const handleProfileClick = useCallback((index) => {
+    playProfileMusic(); // Toca a música ao clicar
+    
     const profile = profiles[index];
     setSelectedProfileIndex(index); 
     onSelectProfile(profile);        
-  }, [profiles, onSelectProfile]);
+  }, [profiles, onSelectProfile, playProfileMusic]); // Adiciona 'playProfileMusic'
 
+  // --- CORREÇÃO 3: Adiciona 'playProfileMusic' às dependências do handleKeyDown ---
   const handleKeyDown = useCallback((event) => {
+    playProfileMusic(); // Toca a música na primeira interação de teclado
+    
     const key = event.key.toLowerCase(); 
     
     if (key === 'arrowleft' || key === 'a') {
@@ -67,7 +81,7 @@ export default function ProfileSelect({ profiles, onSelectProfile }) {
       event.preventDefault();
       handleProfileClick(selectedProfileIndex);
     }
-  }, [selectedProfileIndex, profiles, handleProfileClick]); 
+  }, [selectedProfileIndex, profiles, handleProfileClick, playProfileMusic]); // 'playProfileMusic' adicionado
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
@@ -90,8 +104,8 @@ export default function ProfileSelect({ profiles, onSelectProfile }) {
         Seu navegador não suporta a tag de vídeo.
       </video>
       
-      {/* AJUSTADO: Overlay com opacidade ainda mais reduzida */}
-      <div className="absolute inset-0 bg-black/0 z-10" /> 
+      {/* Overlay com opacidade reduzida e SEM backdrop-blur */}
+      <div className="absolute inset-0 bg-black/60 z-10" /> 
       
       {/* Conteúdo Central */}
       <div className="relative z-20 flex flex-col items-center">
@@ -106,6 +120,7 @@ export default function ProfileSelect({ profiles, onSelectProfile }) {
               key={profile.id}
               profile={profile}
               isSelected={index === selectedProfileIndex}
+              // CORREÇÃO 4: Simplifica o onClick para usar o handler unificado
               onClick={() => handleProfileClick(index)} 
             />
           ))}
