@@ -6,6 +6,7 @@ import LibraryGrid from "./components/LibraryGrid";
 import ProfileSelect from "./components/ProfileSelect"; 
 import Navbar from "./components/Navbar"; 
 import GameDetailScreen from "./components/GameDetailScreen"; 
+import BootScreen from "./components/BootScreen"; // Importação da Tela de Boot
 import { games } from "./data/games";
 
 // Importa todos os sons
@@ -15,23 +16,21 @@ import navigationBackSound from "./sound/navigation_back.mp3";
 import backgroundMusic from "./sound/background_music.mp3"; 
 import profileMusicFile from "./sound/profile_music.mp3"; 
 
-// --- Constantes de JOGOS ---
+// --- Constantes (omitidas por brevidade, são as mesmas) ---
 const storeItem = { id: 0, title: "PlayStation Store", cover: "/images/ps_store_icon.png", banner: "/images/cyberpunk_banner.png", logoUrl: null };
 const libraryItem = { id: 99, title: "Biblioteca de Jogos", cover: "/images/library_icon.png", banner: "/images/gow_banner.webp", logoUrl: null };
 const allSelectableItems = [storeItem, ...games, libraryItem];
-// --- Constantes de PERFIL ---
 const PROFILES = [
   { id: 1, name: "Kratos", imageUrl: "/images/kratos_icon.jpeg", action: "home" },
   { id: 2, name: "Documentação", imageUrl: "/images/document_icon.png", action: "docs" },
 ];
 const PS_STORE_URL = "https://store.playstation.com/pt-br/pages/latest"; 
 const DOCS_URL = "https://github.com/Gabrielsln/PS5Project/blob/main/README.md";
-// --- Itens da Navbar ---
 const NAVBAR_ITEMS = ['jogos', 'documentacao', 'perfil'];
 
 
 export default function App() {
-  const [view, setView] = useState('profile'); 
+  const [view, setView] = useState('boot'); // Inicia na tela de Boot
   const [appOpacity, setAppOpacity] = useState(1);
   const [selectedProfile, setSelectedProfile] = useState(PROFILES[0]); 
 
@@ -90,8 +89,8 @@ export default function App() {
       dashMusic.currentTime = 0;
       
       profMusic.loop = true;
-      profMusic.play().catch(e => console.warn("Música de perfil bloqueada pelo autoplay. Aguardando interação."));
-    } else {
+      profMusic.play().catch(e => console.warn("Música de perfil bloqueada."));
+    } else if (view === 'home' || view === 'library') {
       profMusic.pause(); 
       profMusic.currentTime = 0;
       
@@ -99,6 +98,11 @@ export default function App() {
         dashMusic.loop = true;
         dashMusic.play().catch(e => console.warn("Música do dashboard falhou:", e));
       }
+    } else if (view === 'boot') {
+        dashMusic.pause(); 
+        dashMusic.currentTime = 0;
+        profMusic.pause(); 
+        profMusic.currentTime = 0;
     }
   }, [view]); 
 
@@ -132,7 +136,7 @@ export default function App() {
   // HANDLERS DE EXPANSÃO (DECLARADOS PRIMEIRO)
   const handleGameExpand = useCallback((gameId) => {
     audioEnter.current.currentTime = 0;
-    audioEnter.current.play().catch((e) => console.error("Audio enter failed:", e));
+    audioEnter.current.play().catch((e) => console.error("Audio play failed:", e));
     setExpandedGameId(gameId); 
   }, []); 
 
@@ -146,6 +150,21 @@ export default function App() {
   const handleOpenDocumentation = useCallback(() => {
       window.open(DOCS_URL, '_blank'); 
   }, []);
+
+  // --- CORREÇÃO: Lógica de Boot (Adiciona Transição Suave) ---
+  const handleBoot = useCallback(() => {
+      // Toca o som de "confirmação" (desbloqueando o áudio)
+      audioEnter.current.currentTime = 0;
+      audioEnter.current.play().catch(e => console.warn("Boot audio failed:", e));
+      
+      // USA A TRANSIÇÃO (Fade out/Fade in)
+      setAppOpacity(0);
+      setTimeout(() => {
+        setView('profile'); // Vai para a tela de perfil
+        setAppOpacity(1);
+      }, 300); // 300ms de fade
+  }, [audioEnter]);
+  // ---------------------------------------------------
 
   // HANDLER DE SELEÇÃO DE PERFIL
   const handleProfileSelect = useCallback((profile) => {
@@ -230,7 +249,8 @@ export default function App() {
   const handleKeyDown = useCallback(
     (event) => {
       if (event.repeat) return;
-      if (viewRef.current === 'profile' || expandedGameId) return; 
+      // CORRIGIDO: Ignora o teclado na tela de BOOT
+      if (viewRef.current === 'profile' || viewRef.current === 'boot' || expandedGameId) return; 
 
       const key = event.key.toLowerCase();
 
@@ -333,8 +353,8 @@ export default function App() {
     };
 
     cleanup();
-
-    if (appOpacity === 1 && view !== 'profile' && !expandedGameId) { 
+    
+    if (appOpacity === 1 && view !== 'profile' && view !== 'boot' && !expandedGameId) { 
       window.addEventListener("keydown", handleKeyDown);
       window.addEventListener("keyup", handleKeyUp);
     }
@@ -350,7 +370,7 @@ export default function App() {
   return (
     <div 
       className="min-h-screen w-full relative flex flex-col overflow-hidden"
-      style={{ opacity: appOpacity, transition: 'opacity 0.2s ease-in-out' }}
+      style={{ opacity: appOpacity, transition: 'opacity 0.3s ease-in-out' }} // Duração do fade
     >
       
       {/* TELA DE DETALHE DO JOGO (Expansão) - Prioridade Máxima */}
@@ -364,6 +384,11 @@ export default function App() {
       {/* TELA DE SELEÇÃO DE PERFIL / HOME / LIBRARY (só renderiza se NÃO estiver expandido) */}
       {!expandedGame && (
         <>
+          {/* NOVO: TELA DE BOOT */}
+          {view === 'boot' && (
+              <BootScreen onBoot={handleBoot} />
+          )}
+
           {view === 'profile' && (
               <ProfileSelect 
                 profiles={PROFILES} 
@@ -420,7 +445,6 @@ export default function App() {
                   />
                 </div>
 
-                {/* Bloco de Animação do Logo/Título */}
                 <div
                   key={selectedItem.id}
                   className="text-left p-8 mb-16 max-w-2xl animate-slideInUp" 

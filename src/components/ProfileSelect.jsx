@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 
-// Componente para o Cartão de Perfil
+// Componente para o Cartão de Perfil (Sem alterações, mas incluído para referência)
 const ProfileCard = ({ profile, isSelected, onClick }) => {
   return (
     <div 
@@ -47,27 +47,42 @@ const ProfileCard = ({ profile, isSelected, onClick }) => {
 
 export default function ProfileSelect({ profiles, onSelectProfile, profileMusic }) {
   const [selectedProfileIndex, setSelectedProfileIndex] = useState(0);
+  
+  // --- NOVO ESTADO DE ANIMAÇÃO ---
+  // Controla se os elementos da tela de perfil estão prontos para aparecer
+  const [isLoaded, setIsLoaded] = useState(false);
 
-  // --- CORREÇÃO 1: Estabiliza a função 'playProfileMusic' com useCallback ---
+  // --- EFEITO DE ANIMAÇÃO AO MONTAR ---
+  useEffect(() => {
+    // Um pequeno atraso (50ms) para garantir que a transição de fade do App.jsx comece
+    // antes que a animação de pop-in dos perfis comece.
+    const timer = setTimeout(() => {
+      setIsLoaded(true);
+    }, 50);
+
+    return () => clearTimeout(timer);
+  }, []); // Roda apenas uma vez quando o componente é montado
+
+  // Função auxiliar para tocar a música de perfil (se pausada)
   const playProfileMusic = useCallback(() => {
     if (profileMusic && profileMusic.current && profileMusic.current.paused) {
       profileMusic.current.loop = true;
       profileMusic.current.play().catch(e => console.warn("Música de perfil falhou:", e));
     }
-  }, [profileMusic]); // Esta função só depende da ref da música
+  }, [profileMusic]); 
 
-  // --- CORREÇÃO 2: Unifica 'handleProfileClick' para tocar música ---
+  // Handler unificado para cliques e navegação
   const handleProfileClick = useCallback((index) => {
     playProfileMusic(); // Toca a música ao clicar
     
     const profile = profiles[index];
     setSelectedProfileIndex(index); 
     onSelectProfile(profile);        
-  }, [profiles, onSelectProfile, playProfileMusic]); // Adiciona 'playProfileMusic'
+  }, [profiles, onSelectProfile, playProfileMusic]); 
 
-  // --- CORREÇÃO 3: Adiciona 'playProfileMusic' às dependências do handleKeyDown ---
+  // Manipulação de Teclado
   const handleKeyDown = useCallback((event) => {
-    playProfileMusic(); // Toca a música na primeira interação de teclado
+    playProfileMusic(); 
     
     const key = event.key.toLowerCase(); 
     
@@ -81,7 +96,7 @@ export default function ProfileSelect({ profiles, onSelectProfile, profileMusic 
       event.preventDefault();
       handleProfileClick(selectedProfileIndex);
     }
-  }, [selectedProfileIndex, profiles, handleProfileClick, playProfileMusic]); // 'playProfileMusic' adicionado
+  }, [selectedProfileIndex, profiles, handleProfileClick, playProfileMusic]); 
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
@@ -104,25 +119,48 @@ export default function ProfileSelect({ profiles, onSelectProfile, profileMusic 
         Seu navegador não suporta a tag de vídeo.
       </video>
       
-      {/* Overlay com opacidade reduzida e SEM backdrop-blur */}
-      <div className="absolute inset-0 bg-black/60 z-10" /> 
+      {/* Overlay */}
+      <div className="absolute inset-0 bg-black/0 z-10" /> 
       
       {/* Conteúdo Central */}
       <div className="relative z-20 flex flex-col items-center">
-        <h1 className="text-3xl font-light text-white mb-2">
+        {/* --- ANIMAÇÃO DE TEXTO --- */}
+        <h1 
+          className={`text-3xl font-light text-white mb-2 transition-all duration-500 ease-out
+            ${isLoaded ? 'opacity-100' : 'opacity-0 -translate-y-4'}
+          `}
+          style={{ transitionDelay: '50ms' }} // Atraso leve
+        >
           Seja bem-vindo(a) novamente ao PlayStation
         </h1>
-        <p className="text-gray-400 mb-20">Quem está usando esse controle?</p>
+        <p 
+          className={`text-gray-400 mb-20 transition-all duration-500 ease-out
+            ${isLoaded ? 'opacity-100' : 'opacity-0 -translate-y-4'}
+          `}
+          style={{ transitionDelay: '100ms' }} // Atraso um pouco maior
+        >
+          Quem está usando esse controle?
+        </p>
+        {/* --- FIM DA ANIMAÇÃO DE TEXTO --- */}
 
         <div className="flex justify-center">
           {profiles.map((profile, index) => (
-            <ProfileCard
+            // --- ANIMAÇÃO DE POP-IN ESCALONADA ---
+            <div
               key={profile.id}
-              profile={profile}
-              isSelected={index === selectedProfileIndex}
-              // CORREÇÃO 4: Simplifica o onClick para usar o handler unificado
-              onClick={() => handleProfileClick(index)} 
-            />
+              className={`
+                transition-all duration-300 ease-out
+                ${isLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-90'}
+              `}
+              // Atraso de 200ms para o primeiro, 300ms para o segundo
+              style={{ transitionDelay: `${200 + (index * 100)}ms` }} 
+            >
+              <ProfileCard
+                profile={profile}
+                isSelected={index === selectedProfileIndex}
+                onClick={() => handleProfileClick(index)} 
+              />
+            </div>
           ))}
         </div>
 
