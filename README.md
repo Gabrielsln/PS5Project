@@ -38,11 +38,6 @@ O projeto é organizado para máxima clareza:
 | `GameDetailScreen.jsx` | Tela de visualização de detalhes do jogo, com sinopse dinâmica e animação de expansão. |
 | `src/data/games.js` | Fonte de dados dos jogos, incluindo `title`, `publisher` (editora) e `sinopse` (implícita no `GameDetailScreen`). |
 
-
-**Executar o Projeto pelo Vercel(funcional):**
-
-https://interface-videogame.vercel.app/
-
 **COMANDOS DE INTERFACE:**
 
 W/A/S/D - mover entre os jogos
