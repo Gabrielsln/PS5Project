@@ -1,4 +1,4 @@
-// src/components/LibraryGrid.jsx (CORRIGIDO: Anel Branco)
+// src/components/LibraryGrid.jsx (CORRIGIDO: Adiciona efeito de brilho)
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import moveSound from '../sound/move.mp3'; 
@@ -148,11 +148,32 @@ export default function LibraryGrid({ games, onBack, onGameExpand }) {
                     return (
                         <div 
                             key={game.id} 
-                            // CORRIGIDO: Anel de seleção branco
-                            className={`flex flex-col cursor-pointer transition-transform duration-150 ${isSelected ? 'scale-110 ring-2 ring-white' : 'hover:scale-105'}`}
+                            // 1. ADICIONADO: 'relative' e 'overflow-hidden' para conter o brilho
+                            className={`
+                              relative overflow-hidden rounded-lg
+                              flex flex-col cursor-pointer transition-transform duration-150 
+                              ${isSelected ? 'scale-110 ring-2 ring-white' : 'hover:scale-105'}
+                            `}
                             onClick={() => { setSelectedIndex(index); onGameExpand(game.id); }}
                         >
-                            <img src={game.cover} alt={game.title} className="w-full object-cover rounded-lg shadow-lg aspect-square"/>
+                            <img 
+                              src={game.cover} 
+                              alt={game.title} 
+                              className="w-full object-cover shadow-lg aspect-square"
+                            />
+                            
+                            {/* 2. ADICIONADO: O <span> de brilho (shimmer) */}
+                            {isSelected && (
+                              <span 
+                                className="
+                                  absolute inset-0 
+                                  bg-gradient-to-r from-transparent via-white/30 to-transparent 
+                                  -translate-x-full 
+                                  animate-shimmer 
+                                  opacity-50
+                                "
+                              />
+                            )}
                         </div>
                     );
                 })}

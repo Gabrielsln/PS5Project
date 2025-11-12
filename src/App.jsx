@@ -1,4 +1,4 @@
-
+// src/App.jsx
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import GameCard from "./components/GameCard";
@@ -13,9 +13,9 @@ import moveSound from "./sound/move.mp3";
 import navigationEnterSound from "./sound/navigation_enter.mp3";
 import navigationBackSound from "./sound/navigation_back.mp3";
 
-// --- Constantes de JOGOS ---
-const storeItem = { id: 0, title: "PlayStation Store", cover: "/images/ps_store_icon.png", banner: "/images/cyberpunk_banner.png" };
-const libraryItem = { id: 99, title: "Biblioteca de Jogos", cover: "/images/library_icon.png", banner: "/images/gow_banner.webp" };
+// --- Constantes de JOGOS (COM logoUrl: null) ---
+const storeItem = { id: 0, title: "PlayStation Store", cover: "/images/ps_store_icon.png", banner: "/images/cyberpunk_banner.png", logoUrl: null };
+const libraryItem = { id: 99, title: "Biblioteca de Jogos", cover: "/images/library_icon.png", banner: "/images/gow_banner.webp", logoUrl: null };
 const allSelectableItems = [storeItem, ...games, libraryItem];
 // --- Constantes de PERFIL ---
 const PROFILES = [
@@ -23,7 +23,7 @@ const PROFILES = [
   { id: 2, name: "Documentação", imageUrl: "/images/document_icon.png", action: "docs" },
 ];
 const PS_STORE_URL = "https://store.playstation.com/pt-br/pages/latest"; 
-const DOCS_URL = "https://github.com/Gabrielsln/PS5Project/blob/main/README.md"; // URL do README
+const DOCS_URL = "https://github.com/Gabrielsln/PS5Project/blob/main/README.md";
 
 
 export default function App() {
@@ -106,9 +106,9 @@ export default function App() {
     setExpandedGameId(null);
   }, []);
   
-  // --- NOVO HANDLER: ABRIR DOCUMENTAÇÃO ---
+  // HANDLER: ABRIR DOCUMENTAÇÃO
   const handleOpenDocumentation = useCallback(() => {
-      window.open(DOCS_URL, '_blank'); // Abre em nova aba
+      window.open(DOCS_URL, '_blank'); 
   }, []);
 
   // HANDLER DE SELEÇÃO DE PERFIL
@@ -121,7 +121,7 @@ export default function App() {
     if (profile.action === 'home') {
       setView('home'); 
     } else if (profile.action === 'docs') {
-      handleOpenDocumentation(); // CHAMA O NOVO HANDLER
+      handleOpenDocumentation(); 
     }
   }, [handleOpenDocumentation]); 
 
@@ -132,10 +132,10 @@ export default function App() {
       setView('profile');
   }, []);
 
+
   // FUNÇÃO DE CLIQUE PADRÃO NA HOME (COM CORREÇÃO DA STORE)
   const handleHomeGameClick = useCallback((item) => {
     if (item.id === storeItem.id) {
-      // Abre a Store em nova aba/janela
       window.open(PS_STORE_URL, '_blank');
       return;
     }
@@ -144,12 +144,11 @@ export default function App() {
       return;
     }
     
-    // Se for um jogo normal, EXPANDE
     handleGameExpand(item.id);
   }, [handleGameExpand, handleChangeView]); 
 
 
-  // FUNÇÃO DE MOVIMENTO NA HOME (mantida e funcional)
+  // FUNÇÃO DE MOVIMENTO NA HOME
   const moveHomeSelection = useCallback((direction) => {
     setSelectedId(prevId => {
       const currentIndex = allSelectableItems.findIndex(item => item.id === prevId);
@@ -181,22 +180,18 @@ export default function App() {
       if (viewRef.current === 'profile') return; 
 
       if (viewRef.current === 'home') {
-        // LÓGICA DO ENTER NA HOME (COM CORREÇÃO DA STORE)
         if (event.key === 'Enter') {
             const currentItem = allSelectableItems.find(item => item.id === selectedIdRef.current);
 
             if (currentItem.id === libraryItem.id) {
-                // Se for a Biblioteca, navega
                 audioEnter.current.currentTime = 0;
                 audioEnter.current.play().catch((e) => console.error("Audio enter failed:", e));
                 handleChangeView('library');
                 return;
             } else if (currentItem.id === storeItem.id) {
-                // Se for a Store, abre o site
                 window.open(PS_STORE_URL, '_blank');
                 return;
             } else {
-                // Se for um Jogo (não a Store), EXPANDE
                 handleGameExpand(currentItem.id);
                 return;
             }
@@ -286,7 +281,7 @@ export default function App() {
               <Navbar 
                 profile={selectedProfile}
                 onProfileClick={handleGoToProfileSelect}
-                onDocumentationClick={handleOpenDocumentation} // Passa a função para o Navbar
+                onDocumentationClick={handleOpenDocumentation} 
               />
               
               <div
@@ -316,7 +311,7 @@ export default function App() {
                         key={game.id}
                         game={game}
                         isSelected={selectedId === game.id} 
-                        onClick={() => handleHomeGameClick(game)}
+                        onClick={() => handleHomeGameClick(game)} 
                       />
                     ))}
                   </div>
@@ -327,13 +322,25 @@ export default function App() {
                   />
                 </div>
 
+                {/* --- CORREÇÃO: ANIMAÇÃO E LÓGICA DO LOGO --- */}
                 <div
-                  key={selectedItem.id}
-                  className="text-left p-8 mb-16 max-w-2xl animate-fadeIn"
+                  key={selectedItem.id} // A chave força o React a recriar o componente, disparando a animação
+                  className="text-left p-8 mb-16 max-w-2xl animate-slideInUp" // Usa a nova animação
                 >
-                  <h2 className="text-5xl md:text-6xl font-bold tracking-tight leading-tight text-white mb-4">
-                    {selectedItem.title}
-                  </h2>
+                  {/* Renderização Condicional: Logo ou Título */}
+                  {selectedItem.logoUrl ? (
+                    <img 
+                      src={selectedItem.logoUrl} 
+                      alt={`${selectedItem.title} logo`}
+                      className="h-28 mb-4" // Ajuste a altura conforme necessário
+                    />
+                  ) : (
+                    <h2 className="text-5xl md:text-6xl font-bold tracking-tight leading-tight text-white mb-4">
+                      {selectedItem.title}
+                    </h2>
+                  )}
+
+                  {/* Descrição (Apenas para a Store) */}
                   {selectedItem.id === storeItem.id && (
                     <>
                       <p className="text-xl md:text-2xl font-light leading-relaxed text-gray-200 mb-8">
@@ -346,6 +353,7 @@ export default function App() {
                     </>
                   )}
                 </div>
+                {/* --- FIM DA CORREÇÃO --- */}
               </main>
             </>
           )}
